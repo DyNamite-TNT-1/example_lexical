@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "baseUrl": "src",
+    "paths": {
+      "@base/*": ["base/*"],
+      "@demo-page/*": ["demo-page/*"],
+      "@security/*": ["security/*"],
+      "@application/*": ["application/*"],
+      "@profile/*": ["profile/*"],
+      "@auth/*": ["auth/*"],
+      "@sessions/*": ["sessions/*"],
+      "@account/*":["account/*"]
+    },
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src"
+  ]
+}
