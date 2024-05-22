@@ -16,10 +16,6 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <RecoilRoot>
-      <BrowserRouter basename={baseUrl()}>
-        <App />
-      </BrowserRouter>
-    </RecoilRoot>
+    <App />
   </React.StrictMode>
 );

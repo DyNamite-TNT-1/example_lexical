@@ -123,78 +123,78 @@ const webpackConfig = (env: any): Configuration => ({
   },
   optimization: {
     minimize: true,
-    runtimeChunk: {
-      name: 'manifest'
-    },
-    splitChunks: {
-      chunks: 'all',
-      // minSize: 200000,
-      minSize: 150000,
-      maxSize: 250000,
-      minChunks: 1,
-      maxAsyncRequests: 15,
-      maxInitialRequests: 15,
-      automaticNameDelimiter: '~',
-      name: false,
-      cacheGroups: {
-        reactVendor: {
-          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-          enforce: true
-        },
-        bootstrapVendor: {
-          test: /[\\/]node_modules[\\/]react-bootstrap[\\/]/,
-          enforce: true
-        },
-        reactWorldFlag: {
-          test: /[\\/]node_modules[\\/]react-world-flags[\\/]/
-          // enforce: true,
-        },
-        toastUi: {
-          test: /[\\/]node_modules[\\/]@toast-ui[\\/]/,
-          enforce: true
-        },
-        jquery: {
-          test: /[\\/]node_modules[\\/]jquery[\\/]/,
-          enforce: true
-        },
-        jqueryui: {
-          test: /[\\/]node_modules[\\/]jqueryui[\\/]/,
-          enforce: true
-        },
-        apexcharts: {
-          test: /[\\/]node_modules[\\/]apexcharts[\\/]/,
-          enforce: true
-        },
-        reactFeather: {
-          test: /[\\/]node_modules[\\/]react-feather[\\/]/,
-          enforce: true
-        },
-        dateFns: {
-          test: /[\\/]node_modules[\\/]date-fns[\\/]/,
-          enforce: true
-        },
-        fullcalendar: {
-          test: /[\\/]node_modules[\\/]@fullcalendar[\\/]/,
-          enforce: true
-        },
-        vendor: {
-          test: /[\\/]node_modules[\\/]!(react-bootstrap|react-world-flags|react|react-dom|@toast-ui|date-fns|grapesjs|jqueryui|jquery|apexcharts|react-feather|date-fns|@fullcalendar)[\\/]/
-          // enforce: true,
-        },
-        baseModule: {
-          test: /[\\/]src[\\/]base[\\/]/
-          // enforce: true,
-        },
-        auth: {
-          test: /[\\/]src[\\/]auth[\\/]/,
-          enforce: true
-        },
-        demoModule: {
-          test: /[\\/]src[\\/]demo-page[\\/]/
-          // enforce: true,
-        }
-      }
-    }
+    // runtimeChunk: {
+    //   name: 'manifest'
+    // },
+    // splitChunks: {
+    //   chunks: 'all',
+    //   // minSize: 200000,
+    //   minSize: 150000,
+    //   maxSize: 250000,
+    //   minChunks: 1,
+    //   maxAsyncRequests: 15,
+    //   maxInitialRequests: 15,
+    //   automaticNameDelimiter: '~',
+    //   name: false,
+    //   cacheGroups: {
+    //     reactVendor: {
+    //       test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+    //       enforce: true
+    //     },
+    //     bootstrapVendor: {
+    //       test: /[\\/]node_modules[\\/]react-bootstrap[\\/]/,
+    //       enforce: true
+    //     },
+    //     reactWorldFlag: {
+    //       test: /[\\/]node_modules[\\/]react-world-flags[\\/]/
+    //       // enforce: true,
+    //     },
+    //     toastUi: {
+    //       test: /[\\/]node_modules[\\/]@toast-ui[\\/]/,
+    //       enforce: true
+    //     },
+    //     jquery: {
+    //       test: /[\\/]node_modules[\\/]jquery[\\/]/,
+    //       enforce: true
+    //     },
+    //     jqueryui: {
+    //       test: /[\\/]node_modules[\\/]jqueryui[\\/]/,
+    //       enforce: true
+    //     },
+    //     apexcharts: {
+    //       test: /[\\/]node_modules[\\/]apexcharts[\\/]/,
+    //       enforce: true
+    //     },
+    //     reactFeather: {
+    //       test: /[\\/]node_modules[\\/]react-feather[\\/]/,
+    //       enforce: true
+    //     },
+    //     dateFns: {
+    //       test: /[\\/]node_modules[\\/]date-fns[\\/]/,
+    //       enforce: true
+    //     },
+    //     fullcalendar: {
+    //       test: /[\\/]node_modules[\\/]@fullcalendar[\\/]/,
+    //       enforce: true
+    //     },
+    //     vendor: {
+    //       test: /[\\/]node_modules[\\/]!(react-bootstrap|react-world-flags|react|react-dom|@toast-ui|date-fns|grapesjs|jqueryui|jquery|apexcharts|react-feather|date-fns|@fullcalendar)[\\/]/
+    //       // enforce: true,
+    //     },
+    //     baseModule: {
+    //       test: /[\\/]src[\\/]base[\\/]/
+    //       // enforce: true,
+    //     },
+    //     auth: {
+    //       test: /[\\/]src[\\/]auth[\\/]/,
+    //       enforce: true
+    //     },
+    //     demoModule: {
+    //       test: /[\\/]src[\\/]demo-page[\\/]/
+    //       // enforce: true,
+    //     }
+    //   }
+    // }
   }
 });
 export default webpackConfig;

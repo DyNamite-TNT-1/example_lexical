@@ -7,10 +7,7 @@ import ExampleTheme from "./ExampleTheme";
 import "@base/assets/css/app.css";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { FORMAT_TEXT_COMMAND } from "lexical";
-
-function Placeholder() {
-  return <div className="editor-placeholder">Enter some rich text...</div>;
-}
+import { useEffect } from "react";
 
 const editorConfig = {
   namespace: "React.js Demo",
@@ -33,6 +30,10 @@ declare global {
 
 function MyCustomToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    editor.focus();
+  }, [editor]);
 
   window.formatBold = function () {
     editor.focus();
@@ -61,7 +62,11 @@ export default function App() {
           <div className="editor-inner">
             <RichTextPlugin
               contentEditable={<ContentEditable className="editor-input" />}
-              placeholder={<Placeholder />}
+              placeholder={
+                <div className="editor-placeholder">
+                  Enter some rich text...
+                </div>
+              }
               ErrorBoundary={LexicalErrorBoundary}
             />
           </div>
