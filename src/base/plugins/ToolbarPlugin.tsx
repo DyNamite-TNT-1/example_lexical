@@ -3,32 +3,23 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import {
   $getSelection,
   $isRangeSelection,
-  FORMAT_TEXT_COMMAND,
-  RangeSelection,
   SELECTION_CHANGE_COMMAND,
+  CAN_UNDO_COMMAND,
+  CAN_REDO_COMMAND,
 } from "lexical";
-import { $isAtNodeEnd } from "@lexical/selection";
-import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
+import {} from "@lexical/selection";
+import { mergeRegister } from "@lexical/utils";
 
 const LowPriority = 1;
 
-// declare global {
-//   interface Window {
-//     formatBold: () => void;
-//     formatItalic: () => void;
-//     formatUnderline: () => void;
-//   }
-// }
-
-const Toolbar = () => {
+const ToolbarPlugin = () => {
   const [editor] = useLexicalComposerContext();
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
-
-   useEffect(() => {
-     editor.focus();
-   }, [editor]);
+  const [isStrikethrough, setIsStrikethrough] = useState(false);
 
   const updateToolbar = useCallback(() => {
     // Focus the editor when the effect fires!
@@ -38,6 +29,7 @@ const Toolbar = () => {
       setIsBold(selection.hasFormat("bold"));
       setIsItalic(selection.hasFormat("italic"));
       setIsUnderline(selection.hasFormat("underline"));
+      setIsStrikethrough(selection.hasFormat("strikethrough"));
     }
   }, [editor]);
 
@@ -55,26 +47,50 @@ const Toolbar = () => {
           return false;
         },
         LowPriority
+      ),
+      editor.registerCommand(
+        CAN_UNDO_COMMAND,
+        (payload) => {
+          console.log("undo", payload);
+          setCanUndo(payload);
+          return false;
+        },
+        LowPriority
+      ),
+      editor.registerCommand(
+        CAN_REDO_COMMAND,
+        (payload) => {
+          console.log("redo", payload);
+          setCanRedo(payload);
+          return false;
+        },
+        LowPriority
       )
     );
   }, [editor, updateToolbar]);
 
- 
-
-  window.formatBold = function () {
-    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-  };
-
-  window.formatItalic = function () {
-    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-  };
-
-  window.formatUnderline = function () {
-    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
-  };
-
   return (
     <div className="toolbar">
+      <button
+        disabled={!canUndo}
+        onClick={() => {
+          window.undo();
+        }}
+        className="toolbar-item spaced"
+        aria-label="Undo"
+      >
+        <i className="format undo" />
+      </button>
+      <button
+        disabled={!canRedo}
+        onClick={() => {
+          window.redo();
+        }}
+        className="toolbar-item"
+        aria-label="Redo"
+      >
+        <i className="format redo" />
+      </button>
       <button
         onClick={() => {
           window.formatBold();
@@ -102,8 +118,17 @@ const Toolbar = () => {
       >
         <i className="format underline" />
       </button>
+      <button
+        onClick={() => {
+          window.formatStrikeThrough();
+        }}
+        className={"toolbar-item spaced " + (isStrikethrough ? "active" : "")}
+        aria-label="Format Strikethrough"
+      >
+        <i className="format strikethrough" />
+      </button>
     </div>
   );
 };
 
-export default Toolbar;
+export default ToolbarPlugin;

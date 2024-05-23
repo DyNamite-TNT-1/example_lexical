@@ -2,12 +2,22 @@ import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 
 import ExampleTheme from "./ExampleTheme";
 import "@base/assets/css/app.css";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { FORMAT_TEXT_COMMAND } from "lexical";
+import {
+  FORMAT_TEXT_COMMAND,
+  UNDO_COMMAND,
+  REDO_COMMAND,
+  FORMAT_ELEMENT_COMMAND,
+  INDENT_CONTENT_COMMAND,
+  OUTDENT_CONTENT_COMMAND,
+} from "lexical";
 import { useEffect } from "react";
+import TreeViewPlugin from "@base/plugins/TreeViewPlugin";
+import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
 
 const editorConfig = {
   namespace: "React.js Demo",
@@ -22,32 +32,83 @@ const editorConfig = {
 
 declare global {
   interface Window {
+    undo: () => void;
+    redo: () => void;
     formatBold: () => void;
     formatItalic: () => void;
     formatUnderline: () => void;
+    formatStrikeThrough: () => void;
+    formatCodeInline: () => void;
+    indent: () => void;
+    outdent: () => void;
+    alignLeft: () => void;
+    alignCenter: () => void;
+    alignRight: () => void;
+    alignJustify: () => void;
   }
 }
 
-function MyCustomToolbarPlugin() {
+function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
-
   useEffect(() => {
     editor.focus();
   }, [editor]);
+  return null;
+}
+
+function MyFunctionPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  window.undo = function () {
+    editor.dispatchCommand(UNDO_COMMAND, undefined);
+  };
+
+  window.redo = function () {
+    editor.dispatchCommand(REDO_COMMAND, undefined);
+  };
 
   window.formatBold = function () {
-    editor.focus();
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
   };
 
   window.formatItalic = function () {
-    editor.focus();
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
   };
 
   window.formatUnderline = function () {
-    editor.focus();
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+  };
+
+  window.formatStrikeThrough = function () {
+    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
+  };
+
+  window.formatCodeInline = function () {
+    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code");
+  };
+
+  window.indent = function () {
+    editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined);
+  };
+
+  window.outdent = function () {
+    editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined);
+  };
+
+  window.alignLeft = function () {
+    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left");
+  };
+
+  window.alignCenter = function () {
+    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center");
+  };
+
+  window.alignRight = function () {
+    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right");
+  };
+
+  window.alignJustify = function () {
+    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "justify");
   };
 
   return null;
@@ -58,7 +119,8 @@ export default function App() {
     <div className="App">
       <LexicalComposer initialConfig={editorConfig}>
         <div className="editor-container">
-          <MyCustomToolbarPlugin />
+          <MyFunctionPlugin />
+          <ToolbarPlugin />
           <div className="editor-inner">
             <RichTextPlugin
               contentEditable={<ContentEditable className="editor-input" />}
@@ -69,6 +131,10 @@ export default function App() {
               }
               ErrorBoundary={LexicalErrorBoundary}
             />
+            {/* History Plugin is necessary if want to have undo, redo*/}
+            <HistoryPlugin />
+            <TreeViewPlugin />
+            <AutoFocusPlugin />
           </div>
         </div>
       </LexicalComposer>

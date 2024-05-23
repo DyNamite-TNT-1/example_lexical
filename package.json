@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@lexical/react": "^0.15.0",
+    "@lexical/react": "0.14.5",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -20,7 +20,7 @@
     "fork-ts-checker-webpack-plugin": "^9.0.2",
     "happypack": "^5.0.1",
     "html-loader": "^5.0.0",
-    "lexical": "^0.15.0",
+    "lexical": "0.14.5",
     "lodash": "^4.17.21",
     "postcss-loader": "^8.1.1",
     "qs": "^6.12.0",
