@@ -3,6 +3,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
 import ExampleTheme from "./ExampleTheme";
 import "@base/assets/css/app.css";
@@ -14,14 +15,36 @@ import {
   FORMAT_ELEMENT_COMMAND,
   INDENT_CONTENT_COMMAND,
   OUTDENT_CONTENT_COMMAND,
+  EditorState,
+  $getRoot,
+  $getSelection,
+  $isRangeSelection,
 } from "lexical";
 import { useEffect } from "react";
 import TreeViewPlugin from "@base/plugins/TreeViewPlugin";
 import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
+import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+import { ListItemNode, ListNode } from "@lexical/list";
+import { CodeHighlightNode, CodeNode } from "@lexical/code";
+import { AutoLinkNode, LinkNode } from "@lexical/link";
+import { analyzeSumOfConstants } from "./helper";
 
 const editorConfig = {
   namespace: "React.js Demo",
-  nodes: [],
+  nodes: [
+    HeadingNode,
+    ListNode,
+    ListItemNode,
+    QuoteNode,
+    CodeNode,
+    CodeHighlightNode,
+    TableNode,
+    TableCellNode,
+    TableRowNode,
+    AutoLinkNode,
+    LinkNode,
+  ],
   // Handling of errors during update
   onError(error: Error) {
     throw error;
@@ -29,6 +52,17 @@ const editorConfig = {
   // The editor theme
   theme: ExampleTheme,
 };
+
+
+function onChange(editorState: EditorState) {
+  editorState.read(() => {
+    const selection = $getSelection();
+    console.log(selection);
+    if ($isRangeSelection(selection)) {
+      if (selection.format !== 0) analyzeSumOfConstants(selection.format);
+    }
+  });
+}
 
 declare global {
   interface Window {
@@ -131,6 +165,7 @@ export default function App() {
               }
               ErrorBoundary={LexicalErrorBoundary}
             />
+            <OnChangePlugin onChange={onChange} />
             {/* History Plugin is necessary if want to have undo, redo*/}
             <HistoryPlugin />
             <TreeViewPlugin />

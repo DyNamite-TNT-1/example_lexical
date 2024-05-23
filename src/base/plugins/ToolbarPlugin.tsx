@@ -51,7 +51,6 @@ const ToolbarPlugin = () => {
       editor.registerCommand(
         CAN_UNDO_COMMAND,
         (payload) => {
-          console.log("undo", payload);
           setCanUndo(payload);
           return false;
         },
@@ -60,7 +59,6 @@ const ToolbarPlugin = () => {
       editor.registerCommand(
         CAN_REDO_COMMAND,
         (payload) => {
-          console.log("redo", payload);
           setCanRedo(payload);
           return false;
         },
