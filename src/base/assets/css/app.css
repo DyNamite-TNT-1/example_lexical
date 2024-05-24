@@ -334,3 +334,99 @@ i.underline {
 i.strikethrough {
   background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiBjbGFzcz0iYmkgYmktdHlwZS1zdHJpa2V0aHJvdWdoIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgogIDxwYXRoIGQ9Ik02LjMzMyA1LjY4NmMwIC4zMS4wODMuNTgxLjI3LjgxNEg1LjE2NmEyLjc3NiAyLjc3NiAwIDAgMS0uMDk5LS43NmMwLTEuNjI3IDEuNDM2LTIuNzY4IDMuNDgtMi43NjggMS45NjkgMCAzLjM5IDEuMTc1IDMuNDQ1IDIuODVoLTEuMjNjLS4xMS0xLjA4LS45NjQtMS43NDMtMi4yNS0xLjc0My0xLjIzIDAtMi4xOC42MDItMi4xOCAxLjYwN3ptMi4xOTQgNy40NzhjLTIuMTUzIDAtMy41ODktMS4xMDctMy43MDUtMi44MWgxLjIzYy4xNDQgMS4wNiAxLjEyOSAxLjcwMyAyLjU0NCAxLjcwMyAxLjM0IDAgMi4zMS0uNzA1IDIuMzEtMS42NzUgMC0uODI3LS41NDctMS4zNzQtMS45MTQtMS42NzVMOC4wNDYgOC41SDF2LTFoMTR2MWgtMy41MDRjLjQ2OC40MzcuNjc1Ljk5NC42NzUgMS42OTcgMCAxLjgyNi0xLjQzNiAyLjk2Ny0zLjY0NCAyLjk2N3oiLz4KPC9zdmc+");
 }
+
+.mentions-menu {
+  width: 250px;
+}
+
+.typeahead-popover {
+  background: #fff;
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  position: fixed;
+}
+
+.typeahead-popover ul {
+  padding: 0;
+  list-style: none;
+  margin: 0;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: scroll;
+}
+
+.typeahead-popover ul::-webkit-scrollbar {
+  display: none;
+}
+
+.typeahead-popover ul {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.typeahead-popover ul li {
+  margin: 0;
+  min-width: 180px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.typeahead-popover ul li.selected {
+  background: #eee;
+}
+
+.typeahead-popover li {
+  margin: 0 8px 0 8px;
+  padding: 8px;
+  color: #050505;
+  cursor: pointer;
+  line-height: 16px;
+  font-size: 15px;
+  display: flex;
+  align-content: center;
+  flex-direction: row;
+  flex-shrink: 0;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 0;
+}
+
+.typeahead-popover li.active {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+}
+
+.typeahead-popover li:first-child {
+  border-radius: 8px 8px 0px 0px;
+}
+
+.typeahead-popover li:last-child {
+  border-radius: 0px 0px 8px 8px;
+}
+
+.typeahead-popover li:hover {
+  background-color: #eee;
+}
+
+.typeahead-popover li .text {
+  display: flex;
+  line-height: 20px;
+  flex-grow: 1;
+  min-width: 150px;
+}
+
+.typeahead-popover li .icon {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  user-select: none;
+  margin-right: 8px;
+  line-height: 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}

@@ -31,6 +31,7 @@ import {
   COMMAND_PRIORITY_NORMAL,
   ElementFormatType,
   $isElementNode,
+  LexicalNode,
 } from "lexical";
 import { $isParentElementRTL, $setBlocksType } from "@lexical/selection";
 import {
@@ -48,7 +49,7 @@ import {
 } from "@lexical/list";
 import { $createCodeNode } from "@lexical/code";
 import { $isLinkNode } from "@lexical/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
@@ -61,7 +62,11 @@ import TreeViewPlugin from "@base/plugins/TreeViewPlugin";
 import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
 import CodeHighlightPlugin from "@base/plugins/CodeHighlightPlugin";
 import ListMaxIndentLevelPlugin from "@base/plugins/ListMaxIndentLevelPlugin";
+import MentionsPlugin from "@base/plugins/MentionsPlugin";
 import { blockTypeToBlockName, getSelectedNode } from "./helper";
+import ContextMenuPlugin from "@base/plugins/ContextMenuPlugin";
+import React from "react";
+import { MenuResolution } from "@lexical/react/shared/LexicalMenu";
 const editorConfig = {
   namespace: "React.js Demo",
   nodes: [
@@ -85,6 +90,10 @@ const editorConfig = {
   theme: ExampleTheme,
 };
 
+interface HTMLEditorJavascriptInterface {
+  onChangeStatusButton?: (json: any) => void;
+}
+
 declare global {
   interface Window {
     undo: () => void;
@@ -106,7 +115,7 @@ declare global {
     formatBulletList: () => void;
     formatQuote: () => void;
     formatCodeBlock: () => void;
-    onChangeStatusButton: ({}) => void;
+    NHAN: HTMLEditorJavascriptInterface;
   }
 }
 
@@ -116,6 +125,33 @@ function AutoFocusPlugin() {
     editor.focus();
   }, [editor]);
   return null;
+}
+
+function tryToPositionRange(
+  leadOffset: number,
+  range: Range,
+  editorWindow: Window
+): boolean {
+  const domSelection = editorWindow.getSelection();
+  if (domSelection === null || !domSelection.isCollapsed) {
+    return false;
+  }
+  const anchorNode = domSelection.anchorNode;
+  const startOffset = leadOffset;
+  const endOffset = domSelection.anchorOffset;
+
+  if (anchorNode == null || endOffset == null) {
+    return false;
+  }
+
+  try {
+    range.setStart(anchorNode, startOffset);
+    range.setEnd(anchorNode, endOffset);
+  } catch (error) {
+    return false;
+  }
+
+  return true;
 }
 
 function MyFunctionPlugin() {
@@ -143,6 +179,21 @@ function MyFunctionPlugin() {
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
+      const editorWindow = editor._window || window;
+      const range = editorWindow.document.createRange();
+      // if (!selection.isCollapsed() || range === null) {
+      console.log("offset", selection.anchor.offset);
+      const isRangePositioned = tryToPositionRange(
+        selection.anchor.offset,
+        range,
+        editorWindow
+      );
+      if (isRangePositioned !== null) {
+        console.log("range", range.getBoundingClientRect());
+        // return;
+      }
+      // }
+      //
       const anchorNode = selection.anchor.getNode();
       let element =
         anchorNode.getKey() === "root"
@@ -178,6 +229,7 @@ function MyFunctionPlugin() {
       }
 
       if (elementDOM !== null) {
+        // console.log("cursor", elementDOM.getBoundingClientRect());
         setSelectedElementKey(elementKey);
         if ($isListNode(element)) {
           const parentList = $getNearestNodeOfType<ListNode>(
@@ -262,7 +314,7 @@ function MyFunctionPlugin() {
   }, [$updateToolbar, activeEditor, editor]);
 
   useEffect(() => {
-    window.onChangeStatusButton(
+    window.NHAN?.onChangeStatusButton?.(
       JSON.stringify({
         isRTL,
         isLink,
@@ -413,35 +465,70 @@ function MyFunctionPlugin() {
     }
   };
 
-  window.onChangeStatusButton = function (map: any) {
-    console.log(JSON.parse(map));
-  };
-
   return null;
 }
 
 export default function App() {
   return (
-    <LexicalComposer initialConfig={editorConfig}>
-      <MyFunctionPlugin />
-      <AutoLinkPlugin />
-      <RichTextPlugin
-        contentEditable={<ContentEditable className="editor-input" />}
-        placeholder={
-          <div className="editor-placeholder">Enter some rich text...</div>
-        }
-        ErrorBoundary={LexicalErrorBoundary}
-      />
-      {/* History Plugin is necessary if want to have undo, redo*/}
-      <HistoryPlugin />
-      <LinkPlugin />
-      {/* ListPlugin is necessary for numbered list, bullet list */}
-      <ListPlugin />
-      {/* CodeHighlightPlugin is necessary for code block */}
-      <CodeHighlightPlugin />
-      <ListMaxIndentLevelPlugin maxDepth={7} />
-      {/* <TreeViewPlugin /> This plugin to use when debugging*/}
-      <AutoFocusPlugin />
-    </LexicalComposer>
+    <>
+      <LexicalComposer initialConfig={editorConfig}>
+        <AutoFocusPlugin />
+        <MyFunctionPlugin />
+        {/* <MentionsPlugin /> */}
+        <AutoLinkPlugin />
+        <RichTextPlugin
+          contentEditable={<ContentEditable className="editor-input" />}
+          placeholder={
+            <div className="editor-placeholder">Enter some rich text...</div>
+          }
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+        {/* History Plugin is necessary if want to have undo, redo*/}
+        <HistoryPlugin />
+        <LinkPlugin />
+        {/* ListPlugin is necessary for numbered list, bullet list */}
+        <ListPlugin />
+        {/* CodeHighlightPlugin is necessary for code block */}
+        <CodeHighlightPlugin />
+        <ListMaxIndentLevelPlugin maxDepth={7} />
+        {/* <ContextMenuPlugin /> */}
+        {/* <TreeViewPlugin /> This plugin to use when debugging*/}
+      </LexicalComposer>
+      {/* <QuickMenu /> */}
+    </>
   );
 }
+
+const QuickMenu = () => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // Function to update mouse position
+  const handleMouseMove = (event: any) => {
+    const { clientX, clientY } = event;
+    setMousePosition({ x: clientX, y: clientY });
+  };
+
+  return (
+    <div
+      onMouseMove={handleMouseMove}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        background: "rgba(0, 0, 0, 0.5)",
+        color: "#fff",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 9999,
+      }}
+    >
+      <p>
+        Mouse Position: ({mousePosition.x}, {mousePosition.y})
+      </p>
+      {/* Render your quick menu items here */}
+    </div>
+  );
+};
