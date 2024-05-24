@@ -3,16 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, height=device-height initial-scale=1.0">
   <title>Demo Lexical</title>
   <link rel="icon" type="image/x-icon" href="https://id.jiki.me/b24218f4972120985f1b.ico">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap');
-    :root
-    {
-        --color-example: #fff;
-    }
-
     html,body 
     {
         font-family: "Roboto", sans-serif;
@@ -22,34 +16,20 @@
         height: 100%;
         min-height: 100vh;
         font-size: 16px;
-        text-align: center;
-        color: var(--color-example);
-        margin: 0;
     }
-
+    * {
+      outline: none !important;
+    }
     #root 
     {
-        color: var(--color-example);
         display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-grow: 1;
-        font-size: 2rem;
-    }
-
-
-    .features 
-    {
-        font-size: 1.7rem;
-
-        & div 
-        {
-            padding: 0.5rem;
-        }
+        flex-direction: column;
+        width: 100%; 
+        height: 100%;
     }
   </style>
 </head>
 <body>
-  <div id="root" style="width: 100%; height: 100%"></div>
+  <div id="root"></div>
 </body>
 </html>

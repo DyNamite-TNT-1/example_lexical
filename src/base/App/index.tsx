@@ -32,10 +32,7 @@ import {
   ElementFormatType,
   $isElementNode,
 } from "lexical";
-import {
-  $isParentElementRTL,
-  $setBlocksType,
-} from "@lexical/selection";
+import { $isParentElementRTL, $setBlocksType } from "@lexical/selection";
 import {
   $createHeadingNode,
   $createQuoteNode,
@@ -49,9 +46,7 @@ import {
   ListNode,
   ListItemNode,
 } from "@lexical/list";
-import {
-  $createCodeNode,
-} from "@lexical/code";
+import { $createCodeNode } from "@lexical/code";
 import { $isLinkNode } from "@lexical/link";
 import { useCallback, useEffect, useState } from "react";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
@@ -427,35 +422,26 @@ function MyFunctionPlugin() {
 
 export default function App() {
   return (
-    <div className="App">
-      <LexicalComposer initialConfig={editorConfig}>
-        <div className="editor-container">
-          <MyFunctionPlugin />
-          <AutoLinkPlugin />
-          <ToolbarPlugin />
-          <div className="editor-inner">
-            <RichTextPlugin
-              contentEditable={<ContentEditable className="editor-input" />}
-              placeholder={
-                <div className="editor-placeholder">
-                  Enter some rich text...
-                </div>
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            {/* History Plugin is necessary if want to have undo, redo*/}
-            <HistoryPlugin />
-            <LinkPlugin />
-            {/* ListPlugin is necessary for numbered list, bullet list */}
-            <ListPlugin />
-            {/* CodeHighlightPlugin is necessary for code block */}
-            <CodeHighlightPlugin />
-            <ListMaxIndentLevelPlugin maxDepth={7} />
-            {/* <TreeViewPlugin /> This plugin to use when debugging*/}
-            <AutoFocusPlugin />
-          </div>
-        </div>
-      </LexicalComposer>
-    </div>
+    <LexicalComposer initialConfig={editorConfig}>
+      <MyFunctionPlugin />
+      <AutoLinkPlugin />
+      <RichTextPlugin
+        contentEditable={<ContentEditable className="editor-input" />}
+        placeholder={
+          <div className="editor-placeholder">Enter some rich text...</div>
+        }
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+      {/* History Plugin is necessary if want to have undo, redo*/}
+      <HistoryPlugin />
+      <LinkPlugin />
+      {/* ListPlugin is necessary for numbered list, bullet list */}
+      <ListPlugin />
+      {/* CodeHighlightPlugin is necessary for code block */}
+      <CodeHighlightPlugin />
+      <ListMaxIndentLevelPlugin maxDepth={7} />
+      {/* <TreeViewPlugin /> This plugin to use when debugging*/}
+      <AutoFocusPlugin />
+    </LexicalComposer>
   );
 }
