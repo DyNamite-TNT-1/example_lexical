@@ -6,6 +6,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
@@ -32,6 +33,10 @@ import {
   ElementFormatType,
   $isElementNode,
   LexicalNode,
+  KEY_ENTER_COMMAND,
+  EditorState,
+  LexicalEditor,
+  $getRoot,
 } from "lexical";
 import { $isParentElementRTL, $setBlocksType } from "@lexical/selection";
 import {
@@ -67,6 +72,7 @@ import { blockTypeToBlockName, getSelectedNode } from "./helper";
 import ContextMenuPlugin from "@base/plugins/ContextMenuPlugin";
 import React from "react";
 import { MenuResolution } from "@lexical/react/shared/LexicalMenu";
+import { HTMLEditorJavascriptInterface } from "./type";
 const editorConfig = {
   namespace: "React.js Demo",
   nodes: [
@@ -90,8 +96,31 @@ const editorConfig = {
   theme: ExampleTheme,
 };
 
-interface HTMLEditorJavascriptInterface {
-  onChangeStatusButton?: (json: any) => void;
+function onChange(editorState: EditorState, editor: LexicalEditor) {
+  editor.update(() => {
+    const root = $getRoot();
+    const isRootTextContentEmpty =
+      editor.isComposing() === false && root.getTextContent() === "";
+    console.log(isRootTextContentEmpty);
+    if (isRootTextContentEmpty) {
+      return;
+    }
+    const selection = $getSelection();
+
+    if ($isRangeSelection(selection)) {
+      const domSelection = (editor._window || window).getSelection();
+      if (domSelection === null || !domSelection.isCollapsed) {
+        return;
+      }
+      const anchorNode = domSelection.anchorNode;
+      if (anchorNode === null) {
+        return;
+      }
+      if (anchorNode.nodeType !== Node.TEXT_NODE) {
+        selection.insertText("\n");
+      }
+    }
+  });
 }
 
 declare global {
@@ -116,6 +145,7 @@ declare global {
     formatQuote: () => void;
     formatCodeBlock: () => void;
     NHAN: HTMLEditorJavascriptInterface;
+    insert: () => void;
   }
 }
 
@@ -144,12 +174,17 @@ function tryToPositionRange(
     return false;
   }
 
+  // if (anchorNode.nodeType !== Node.TEXT_NODE) {
+  //   var tempRange = domSelection.getRangeAt(0);
+  //   tempRange.insertNode(document.createElement("span"));
+  // } else {
   try {
     range.setStart(anchorNode, startOffset);
     range.setEnd(anchorNode, endOffset);
   } catch (error) {
     return false;
   }
+  // }
 
   return true;
 }
@@ -157,42 +192,95 @@ function tryToPositionRange(
 function MyFunctionPlugin() {
   const [editor] = useLexicalComposerContext();
   const [activeEditor, setActiveEditor] = useState(editor);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
-  const [blockType, setBlockType] = useState("paragraph");
   const [selectedElementKey, setSelectedElementKey] = useState<string | null>(
     null
   );
 
-  const [codeLanguage, setCodeLanguage] = useState("");
-  const [isRTL, setIsRTL] = useState(false);
-  const [elementFormat, setElementFormat] = useState<ElementFormatType>("left");
-  const [isLink, setIsLink] = useState(false);
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [isUnderline, setIsUnderline] = useState(false);
-  const [isStrikethrough, setIsStrikethrough] = useState(false);
-  const [isSubscript, setIsSubscript] = useState(false);
-  const [isSuperscript, setIsSuperscript] = useState(false);
-  const [isCode, setIsCode] = useState(false);
+  const [styleMap, setStyleMap] = useState<{
+    isRTL: boolean;
+    isLink: boolean;
+    isBold: boolean;
+    isItalic: boolean;
+    isUnderline: boolean;
+    isStrikethrough: boolean;
+    isCode: boolean;
+    canUndo: boolean;
+    canRedo: boolean;
+    blockType: string;
+    elementFormat: ElementFormatType;
+  }>({
+    isRTL: false,
+    isLink: false,
+    isBold: false,
+    isItalic: false,
+    isUnderline: false,
+    isStrikethrough: false,
+    isCode: false,
+    canUndo: false,
+    canRedo: false,
+    blockType: "paragraph",
+    elementFormat: "left",
+  });
+  const [position, setPosition] = useState<{ top: number; left: number }>({
+    top: 0,
+    left: 0,
+  });
+
+  useEffect(() => {
+    console.log(position);
+  }, [position]);
+
+  window.insert = function () {
+    insert();
+  };
+
+  const insert = function () {
+    // editor.update(() => {
+    //   const selection = $getSelection();
+
+    //   if ($isRangeSelection(selection)) {
+    //     selection.insertText("\n");
+    //   }
+    // Get the current selection
+    const selection = window.getSelection();
+
+    if (selection != null && selection.rangeCount > 0) {
+      // Get the range of the current selection
+      const range = selection.getRangeAt(0);
+
+      // Create a new <span> element
+      const span = document.createElement("span");
+
+      range.insertNode(span);
+      setPosition({ top: span.offsetTop, left: span.offsetLeft });
+      // console.log(
+      //   span.offsetTop + window.scrollY,
+      //   span.offsetLeft + window.scrollX
+      // );
+      span.remove();
+    }
+    // });
+  };
 
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
       const editorWindow = editor._window || window;
       const range = editorWindow.document.createRange();
-      // if (!selection.isCollapsed() || range === null) {
-      console.log("offset", selection.anchor.offset);
       const isRangePositioned = tryToPositionRange(
         selection.anchor.offset,
         range,
         editorWindow
       );
       if (isRangePositioned !== null) {
-        console.log("range", range.getBoundingClientRect());
-        // return;
+        const rangeDomRect = range.getBoundingClientRect();
+        if (rangeDomRect.top !== 0 || rangeDomRect.left !== 0) {
+          setPosition({ top: rangeDomRect.top, left: rangeDomRect.left });
+        } else {
+          // insert();
+        }
       }
-      // }
+
       //
       const anchorNode = selection.anchor.getNode();
       let element =
@@ -210,23 +298,23 @@ function MyFunctionPlugin() {
       const elementKey = element.getKey();
       const elementDOM = activeEditor.getElementByKey(elementKey);
       // Update text format
-      setIsBold(selection.hasFormat("bold"));
-      setIsItalic(selection.hasFormat("italic"));
-      setIsUnderline(selection.hasFormat("underline"));
-      setIsStrikethrough(selection.hasFormat("strikethrough"));
-      setIsSubscript(selection.hasFormat("subscript"));
-      setIsSuperscript(selection.hasFormat("superscript"));
-      setIsCode(selection.hasFormat("code"));
-      setIsRTL($isParentElementRTL(selection));
+      setStyleMap({
+        ...styleMap,
+        isRTL: $isParentElementRTL(selection),
+        isBold: selection.hasFormat("bold"),
+        isItalic: selection.hasFormat("italic"),
+        isUnderline: selection.hasFormat("underline"),
+        isStrikethrough: selection.hasFormat("strikethrough"),
+        isCode: selection.hasFormat("code"),
+      });
 
       // Update links
       const node = getSelectedNode(selection);
       const parent = node.getParent();
-      if ($isLinkNode(parent) || $isLinkNode(node)) {
-        setIsLink(true);
-      } else {
-        setIsLink(false);
-      }
+      setStyleMap({
+        ...styleMap,
+        isLink: $isLinkNode(parent) || $isLinkNode(node),
+      });
 
       if (elementDOM !== null) {
         // console.log("cursor", elementDOM.getBoundingClientRect());
@@ -239,13 +327,19 @@ function MyFunctionPlugin() {
           const type = parentList
             ? parentList.getListType()
             : element.getListType();
-          setBlockType(type);
+          setStyleMap({
+            ...styleMap,
+            blockType: type,
+          });
         } else {
           const type = $isHeadingNode(element)
             ? element.getTag()
             : element.getType();
           if (type in blockTypeToBlockName) {
-            setBlockType(type as keyof typeof blockTypeToBlockName);
+            setStyleMap({
+              ...styleMap,
+              blockType: type as keyof typeof blockTypeToBlockName,
+            });
           }
           // if ($isCodeNode(element)) {
           //   const language =
@@ -265,13 +359,14 @@ function MyFunctionPlugin() {
           (parentNode) => $isElementNode(parentNode) && !parentNode.isInline()
         );
       }
-      setElementFormat(
-        $isElementNode(matchingParent)
+      setStyleMap({
+        ...styleMap,
+        elementFormat: $isElementNode(matchingParent)
           ? matchingParent.getFormatType()
           : $isElementNode(node)
             ? node.getFormatType()
-            : parent?.getFormatType() || "left"
-      );
+            : parent?.getFormatType() || "left",
+      });
     }
   }, [activeEditor]);
 
@@ -297,7 +392,10 @@ function MyFunctionPlugin() {
       activeEditor.registerCommand<boolean>(
         CAN_UNDO_COMMAND,
         (payload) => {
-          setCanUndo(payload);
+          setStyleMap({
+            ...styleMap,
+            canUndo: payload,
+          });
           return false;
         },
         COMMAND_PRIORITY_CRITICAL
@@ -305,8 +403,19 @@ function MyFunctionPlugin() {
       activeEditor.registerCommand<boolean>(
         CAN_REDO_COMMAND,
         (payload) => {
-          setCanRedo(payload);
+          setStyleMap({
+            ...styleMap,
+            canRedo: payload,
+          });
           return false;
+        },
+        COMMAND_PRIORITY_CRITICAL
+      ),
+      activeEditor.registerCommand(
+        KEY_ENTER_COMMAND,
+        (event: KeyboardEvent | null) => {
+          // insert();
+          return true;
         },
         COMMAND_PRIORITY_CRITICAL
       )
@@ -314,34 +423,8 @@ function MyFunctionPlugin() {
   }, [$updateToolbar, activeEditor, editor]);
 
   useEffect(() => {
-    window.NHAN?.onChangeStatusButton?.(
-      JSON.stringify({
-        isRTL,
-        isLink,
-        isBold,
-        isItalic,
-        isUnderline,
-        isStrikethrough,
-        isCode,
-        canUndo,
-        canRedo,
-        blockType,
-        elementFormat,
-      })
-    );
-  }, [
-    isRTL,
-    isLink,
-    isBold,
-    isItalic,
-    isUnderline,
-    isStrikethrough,
-    isCode,
-    canUndo,
-    canRedo,
-    blockType,
-    elementFormat,
-  ]);
+    window.NHAN?.onChangeStatusButton?.(JSON.stringify(styleMap));
+  }, [styleMap]);
 
   window.undo = function () {
     editor.dispatchCommand(UNDO_COMMAND, undefined);
@@ -406,7 +489,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatHeading = (headingSize: HeadingTagType) => {
-    if (blockType !== headingSize) {
+    if (styleMap.blockType !== headingSize) {
       editor.update(() => {
         const selection = $getSelection();
         $setBlocksType(selection, () => $createHeadingNode(headingSize));
@@ -415,8 +498,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatBulletList = () => {
-    console.log(blockType);
-    if (blockType !== "bullet") {
+    if (styleMap.blockType !== "bullet") {
       editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
     } else {
       window.formatParagraph();
@@ -424,7 +506,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatNumberedList = () => {
-    if (blockType !== "number") {
+    if (styleMap.blockType !== "number") {
       editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
     } else {
       window.formatParagraph();
@@ -432,7 +514,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatQuote = () => {
-    if (blockType !== "quote") {
+    if (styleMap.blockType !== "quote") {
       editor.update(() => {
         const selection = $getSelection();
 
@@ -444,7 +526,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatCodeBlock = () => {
-    if (blockType !== "code") {
+    if (styleMap.blockType !== "code") {
       editor.update(() => {
         let selection = $getSelection();
 
@@ -474,7 +556,7 @@ export default function App() {
       <LexicalComposer initialConfig={editorConfig}>
         <AutoFocusPlugin />
         <MyFunctionPlugin />
-        {/* <MentionsPlugin /> */}
+        <MentionsPlugin />
         <AutoLinkPlugin />
         <RichTextPlugin
           contentEditable={<ContentEditable className="editor-input" />}
@@ -483,6 +565,7 @@ export default function App() {
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
+        {/* <OnChangePlugin onChange={onChange} /> */}
         {/* History Plugin is necessary if want to have undo, redo*/}
         <HistoryPlugin />
         <LinkPlugin />
@@ -494,41 +577,6 @@ export default function App() {
         {/* <ContextMenuPlugin /> */}
         {/* <TreeViewPlugin /> This plugin to use when debugging*/}
       </LexicalComposer>
-      {/* <QuickMenu /> */}
     </>
   );
 }
-
-const QuickMenu = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
-  // Function to update mouse position
-  const handleMouseMove = (event: any) => {
-    const { clientX, clientY } = event;
-    setMousePosition({ x: clientX, y: clientY });
-  };
-
-  return (
-    <div
-      onMouseMove={handleMouseMove}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: "rgba(0, 0, 0, 0.5)",
-        color: "#fff",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 9999,
-      }}
-    >
-      <p>
-        Mouse Position: ({mousePosition.x}, {mousePosition.y})
-      </p>
-      {/* Render your quick menu items here */}
-    </div>
-  );
-};
