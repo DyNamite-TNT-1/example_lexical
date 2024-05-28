@@ -48,7 +48,13 @@ import {
 } from "@lexical/list";
 import { $createCodeNode } from "@lexical/code";
 import { $isLinkNode } from "@lexical/link";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
@@ -60,7 +66,11 @@ import AutoLinkPlugin from "@base/plugins/AutoLinkPlugin";
 import CodeHighlightPlugin from "@base/plugins/CodeHighlightPlugin";
 import ListMaxIndentLevelPlugin from "@base/plugins/ListMaxIndentLevelPlugin";
 import MentionsPlugin from "@base/plugins/MentionsPlugin";
-import { blockTypeToBlockName, getSelectedNode, tryToPositionRange } from "./helper";
+import {
+  blockTypeToBlockName,
+  getSelectedNode,
+  tryToPositionRange,
+} from "./helper";
 import { MentionNode } from "@base/nodes/MentionNode";
 const editorConfig = {
   namespace: "React.js Demo",
@@ -241,7 +251,7 @@ function MyFunctionPlugin() {
       }
       if (top === 0 && left === 0) {
         const tmpSelection = window.getSelection();
-        if (tmpSelection != null) {
+        if (tmpSelection != null && tmpSelection.isCollapsed) {
           const tmpRange = tmpSelection.getRangeAt(0);
 
           const tmpSpan = document.createElement("span");
