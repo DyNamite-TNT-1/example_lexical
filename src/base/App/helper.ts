@@ -33,3 +33,30 @@ export function getSelectedNode(selection: RangeSelection) {
         return $isAtNodeEnd(anchor) ? focusNode : anchorNode;
     }
 }
+
+export function tryToPositionRange(
+    leadOffset: number,
+    range: Range,
+    editorWindow: Window
+): boolean {
+    const domSelection = editorWindow.getSelection();
+    if (domSelection === null || !domSelection.isCollapsed) {
+        return false;
+    }
+    const anchorNode = domSelection.anchorNode;
+    const startOffset = leadOffset;
+    const endOffset = domSelection.anchorOffset;
+
+    if (anchorNode == null || endOffset == null) {
+        return false;
+    }
+
+    try {
+        range.setStart(anchorNode, startOffset);
+        range.setEnd(anchorNode, endOffset);
+    } catch (error) {
+        return false;
+    }
+
+    return true;
+}

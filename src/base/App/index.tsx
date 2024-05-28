@@ -6,7 +6,6 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
@@ -32,11 +31,6 @@ import {
   COMMAND_PRIORITY_NORMAL,
   ElementFormatType,
   $isElementNode,
-  LexicalNode,
-  KEY_ENTER_COMMAND,
-  EditorState,
-  LexicalEditor,
-  $getRoot,
 } from "lexical";
 import { $isParentElementRTL, $setBlocksType } from "@lexical/selection";
 import {
@@ -54,7 +48,7 @@ import {
 } from "@lexical/list";
 import { $createCodeNode } from "@lexical/code";
 import { $isLinkNode } from "@lexical/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
@@ -63,16 +57,11 @@ import { AutoLinkNode, LinkNode } from "@lexical/link";
 import ExampleTheme from "./ExampleTheme";
 import "@base/assets/css/app.css";
 import AutoLinkPlugin from "@base/plugins/AutoLinkPlugin";
-import TreeViewPlugin from "@base/plugins/TreeViewPlugin";
-import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
 import CodeHighlightPlugin from "@base/plugins/CodeHighlightPlugin";
 import ListMaxIndentLevelPlugin from "@base/plugins/ListMaxIndentLevelPlugin";
 import MentionsPlugin from "@base/plugins/MentionsPlugin";
-import { blockTypeToBlockName, getSelectedNode } from "./helper";
-import ContextMenuPlugin from "@base/plugins/ContextMenuPlugin";
-import React from "react";
-import { MenuResolution } from "@lexical/react/shared/LexicalMenu";
-import { HTMLEditorJavascriptInterface } from "./type";
+import { blockTypeToBlockName, getSelectedNode, tryToPositionRange } from "./helper";
+import { MentionNode } from "@base/nodes/MentionNode";
 const editorConfig = {
   namespace: "React.js Demo",
   nodes: [
@@ -87,67 +76,14 @@ const editorConfig = {
     TableRowNode,
     AutoLinkNode,
     LinkNode,
+    MentionNode,
   ],
-  // Handling of errors during update
+
   onError(error: Error) {
     throw error;
   },
-  // The editor theme
   theme: ExampleTheme,
 };
-
-function onChange(editorState: EditorState, editor: LexicalEditor) {
-  editor.update(() => {
-    const root = $getRoot();
-    const isRootTextContentEmpty =
-      editor.isComposing() === false && root.getTextContent() === "";
-    console.log(isRootTextContentEmpty);
-    if (isRootTextContentEmpty) {
-      return;
-    }
-    const selection = $getSelection();
-
-    if ($isRangeSelection(selection)) {
-      const domSelection = (editor._window || window).getSelection();
-      if (domSelection === null || !domSelection.isCollapsed) {
-        return;
-      }
-      const anchorNode = domSelection.anchorNode;
-      if (anchorNode === null) {
-        return;
-      }
-      if (anchorNode.nodeType !== Node.TEXT_NODE) {
-        selection.insertText("\n");
-      }
-    }
-  });
-}
-
-declare global {
-  interface Window {
-    undo: () => void;
-    redo: () => void;
-    formatBold: () => void;
-    formatItalic: () => void;
-    formatUnderline: () => void;
-    formatStrikeThrough: () => void;
-    formatCodeInline: () => void;
-    indent: () => void;
-    outdent: () => void;
-    alignLeft: () => void;
-    alignCenter: () => void;
-    alignRight: () => void;
-    alignJustify: () => void;
-    formatParagraph: () => void;
-    formatHeading: (headingSize: HeadingTagType) => void;
-    formatNumberedList: () => void;
-    formatBulletList: () => void;
-    formatQuote: () => void;
-    formatCodeBlock: () => void;
-    NHAN: HTMLEditorJavascriptInterface;
-    insert: () => void;
-  }
-}
 
 function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -155,38 +91,6 @@ function AutoFocusPlugin() {
     editor.focus();
   }, [editor]);
   return null;
-}
-
-function tryToPositionRange(
-  leadOffset: number,
-  range: Range,
-  editorWindow: Window
-): boolean {
-  const domSelection = editorWindow.getSelection();
-  if (domSelection === null || !domSelection.isCollapsed) {
-    return false;
-  }
-  const anchorNode = domSelection.anchorNode;
-  const startOffset = leadOffset;
-  const endOffset = domSelection.anchorOffset;
-
-  if (anchorNode == null || endOffset == null) {
-    return false;
-  }
-
-  // if (anchorNode.nodeType !== Node.TEXT_NODE) {
-  //   var tempRange = domSelection.getRangeAt(0);
-  //   tempRange.insertNode(document.createElement("span"));
-  // } else {
-  try {
-    range.setStart(anchorNode, startOffset);
-    range.setEnd(anchorNode, endOffset);
-  } catch (error) {
-    return false;
-  }
-  // }
-
-  return true;
 }
 
 function MyFunctionPlugin() {
@@ -226,61 +130,9 @@ function MyFunctionPlugin() {
     left: 0,
   });
 
-  useEffect(() => {
-    console.log(position);
-  }, [position]);
-
-  window.insert = function () {
-    insert();
-  };
-
-  const insert = function () {
-    // editor.update(() => {
-    //   const selection = $getSelection();
-
-    //   if ($isRangeSelection(selection)) {
-    //     selection.insertText("\n");
-    //   }
-    // Get the current selection
-    const selection = window.getSelection();
-
-    if (selection != null && selection.rangeCount > 0) {
-      // Get the range of the current selection
-      const range = selection.getRangeAt(0);
-
-      // Create a new <span> element
-      const span = document.createElement("span");
-
-      range.insertNode(span);
-      setPosition({ top: span.offsetTop, left: span.offsetLeft });
-      // console.log(
-      //   span.offsetTop + window.scrollY,
-      //   span.offsetLeft + window.scrollX
-      // );
-      span.remove();
-    }
-    // });
-  };
-
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
-      const editorWindow = editor._window || window;
-      const range = editorWindow.document.createRange();
-      const isRangePositioned = tryToPositionRange(
-        selection.anchor.offset,
-        range,
-        editorWindow
-      );
-      if (isRangePositioned !== null) {
-        const rangeDomRect = range.getBoundingClientRect();
-        if (rangeDomRect.top !== 0 || rangeDomRect.left !== 0) {
-          setPosition({ top: rangeDomRect.top, left: rangeDomRect.left });
-        } else {
-          // insert();
-        }
-      }
-
       //
       const anchorNode = selection.anchor.getNode();
       let element =
@@ -370,17 +222,70 @@ function MyFunctionPlugin() {
     }
   }, [activeEditor]);
 
+  const getCarret = useCallback(() => {
+    let top = 0,
+      left = 0;
+    const selection = $getSelection();
+    if ($isRangeSelection(selection)) {
+      const editorWindow = editor._window || window;
+      const range = editorWindow.document.createRange();
+      const isRangePositioned = tryToPositionRange(
+        selection.anchor.offset,
+        range,
+        editorWindow
+      );
+      if (isRangePositioned !== null) {
+        const rangeDomRect = range.getBoundingClientRect();
+        top = rangeDomRect.top;
+        left = rangeDomRect.left;
+      }
+      if (top === 0 && left === 0) {
+        const tmpSelection = window.getSelection();
+        if (tmpSelection != null) {
+          const tmpRange = tmpSelection.getRangeAt(0);
+
+          const tmpSpan = document.createElement("span");
+          tmpSpan.setAttribute("data-lexical-text", "true");
+
+          tmpRange.insertNode(tmpSpan);
+          const isTmpRangePositioned = tryToPositionRange(
+            tmpSelection.anchorOffset,
+            tmpRange,
+            editorWindow
+          );
+          if (isTmpRangePositioned !== null) {
+            const tmpRangeDomRect = tmpRange.getBoundingClientRect();
+            if (
+              tmpRangeDomRect.top !== position.top ||
+              tmpRangeDomRect.left !== position.left
+            ) {
+              top = tmpRangeDomRect.top;
+              left = tmpRangeDomRect.left;
+            }
+          }
+          tmpSpan.remove();
+        }
+      }
+      if (
+        (top !== position.top || left !== position.left) &&
+        (top !== 0 || left !== 0)
+      )
+        setPosition({ top: top, left: left });
+    }
+  }, [activeEditor, position]);
+
   useEffect(() => {
     return editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
       (_payload, newEditor) => {
         $updateToolbar();
         setActiveEditor(newEditor);
+        getCarret();
         return false;
       },
       COMMAND_PRIORITY_CRITICAL
     );
-  }, [editor, $updateToolbar]);
+  }, [editor, $updateToolbar, getCarret]);
 
   useEffect(() => {
     return mergeRegister(
@@ -410,14 +315,6 @@ function MyFunctionPlugin() {
           return false;
         },
         COMMAND_PRIORITY_CRITICAL
-      ),
-      activeEditor.registerCommand(
-        KEY_ENTER_COMMAND,
-        (event: KeyboardEvent | null) => {
-          // insert();
-          return true;
-        },
-        COMMAND_PRIORITY_CRITICAL
       )
     );
   }, [$updateToolbar, activeEditor, editor]);
@@ -425,6 +322,11 @@ function MyFunctionPlugin() {
   useEffect(() => {
     window.NHAN?.onChangeStatusButton?.(JSON.stringify(styleMap));
   }, [styleMap]);
+
+  useEffect(() => {
+    console.log(position);
+    window.NHAN?.getCarret?.(JSON.stringify(position));
+  }, [position]);
 
   window.undo = function () {
     editor.dispatchCommand(UNDO_COMMAND, undefined);
@@ -551,6 +453,27 @@ function MyFunctionPlugin() {
 }
 
 export default function App() {
+  const editorRef = useRef(null);
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === editorRef.current) {
+          const newHeight = entry.contentRect.height;
+          window.NHAN?.updateHeight?.(JSON.stringify({ height: newHeight }));
+        }
+      }
+    });
+
+    if (editorRef.current) {
+      resizeObserver.observe(editorRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   return (
     <>
       <LexicalComposer initialConfig={editorConfig}>
@@ -559,13 +482,16 @@ export default function App() {
         <MentionsPlugin />
         <AutoLinkPlugin />
         <RichTextPlugin
-          contentEditable={<ContentEditable className="editor-input" />}
+          contentEditable={
+            <div className="editor-input" ref={editorRef}>
+              <ContentEditable />
+            </div>
+          }
           placeholder={
             <div className="editor-placeholder">Enter some rich text...</div>
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
-        {/* <OnChangePlugin onChange={onChange} /> */}
         {/* History Plugin is necessary if want to have undo, redo*/}
         <HistoryPlugin />
         <LinkPlugin />
