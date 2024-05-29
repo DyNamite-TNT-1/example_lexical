@@ -31,5 +31,11 @@ declare global {
         formatQuote: () => void;
         formatCodeBlock: () => void;
         NHAN: HTMLEditorJavascriptInterface;
+        //
+        setHTMLContent: (baseUrl: string, content: string, placeHolder: string) => void;
+        initCompleted?: () => void;
+        setPaddingTopBottom: (top: number, bottom: number) => void;
+        getSelectionCoords: (win?: Window) => any;
+        onPaddingChanged?: (json: any) => void;
     }
 }

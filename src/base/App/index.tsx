@@ -2,7 +2,8 @@
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+// import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { RichTextPlugin } from "@base/plugins/RichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
@@ -11,6 +12,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import {
   $getNearestNodeOfType,
   $findMatchingParent,
+  $getNearestBlockElementAncestorOrThrow,
   mergeRegister,
 } from "@lexical/utils";
 import {
@@ -31,6 +33,7 @@ import {
   COMMAND_PRIORITY_NORMAL,
   ElementFormatType,
   $isElementNode,
+  $getRoot,
 } from "lexical";
 import { $isParentElementRTL, $setBlocksType } from "@lexical/selection";
 import {
@@ -55,10 +58,12 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { $generateNodesFromDOM } from "@lexical/html";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
+import { Base64 } from "js-base64";
 // base
 import ExampleTheme from "./ExampleTheme";
 import "@base/assets/css/app.css";
@@ -285,12 +290,16 @@ function MyFunctionPlugin() {
   }, [activeEditor, position]);
 
   useEffect(() => {
+    window.initCompleted?.();
+  }, [editor]);
+
+  useEffect(() => {
     return editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
       (_payload, newEditor) => {
         $updateToolbar();
         setActiveEditor(newEditor);
-        getCarret();
+        // getCarret();
         return false;
       },
       COMMAND_PRIORITY_CRITICAL
@@ -330,6 +339,7 @@ function MyFunctionPlugin() {
   }, [$updateToolbar, activeEditor, editor]);
 
   useEffect(() => {
+    // console.log({ styleMap });
     window.NHAN?.onChangeStatusButton?.(JSON.stringify(styleMap));
   }, [styleMap]);
 
@@ -459,11 +469,39 @@ function MyFunctionPlugin() {
     }
   };
 
+  window.setHTMLContent = (
+    baseUrl: string,
+    content: string,
+    placeHolder: string
+  ) => {
+    console.log("@param [content]:", content);
+    editor.update(() => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(Base64.decode(content), "text/html");
+
+      const nodes = $generateNodesFromDOM(editor, dom);
+      const root = $getRoot();
+      root.clear();
+      nodes.forEach((node) => {
+        console.log(node, $isElementNode(node));
+        if ($isElementNode(node)) {
+          root.append(node);
+        } else {
+          const paragraphNode = $createParagraphNode();
+          paragraphNode.append(node);
+          root.append(paragraphNode);
+        }
+      });
+    });
+  };
+
   return null;
 }
 
 export default function App() {
   const editorRef = useRef(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const kbRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
@@ -484,35 +522,121 @@ export default function App() {
     };
   }, []);
 
+  function getCarret() {
+    var coords = window.getSelectionCoords();
+    var yTop = coords.y + document.body.scrollTop;
+    var yBottom = coords.bottom + document.body.scrollTop;
+    return { yTop: yTop, yBottom: yBottom };
+  }
+
+  window.getSelectionCoords = function (win) {
+    win = win || window;
+    var doc = win.document;
+    var sel = doc.getSelection(),
+      range,
+      rects,
+      rect;
+    var x = 0,
+      y = 0,
+      bottom = 0;
+    if (sel) {
+      if (sel.type != "Control") {
+        // range = sel.createRange();
+        const range = win.document.createRange();
+
+        range.collapse(true);
+        x = range.getBoundingClientRect().left;
+        y = range.getBoundingClientRect().top;
+      }
+    } else if (win.getSelection) {
+      sel = win.getSelection();
+      if (sel && sel.rangeCount) {
+        range = sel.getRangeAt(0).cloneRange();
+        if (range.getClientRects) {
+          range.collapse(true);
+          rects = range.getClientRects();
+          if (rects.length > 0) {
+            rect = rects[0];
+          }
+          if (rect) {
+            x = rect.left;
+            y = rect.top;
+            bottom = rect.bottom;
+          }
+        }
+        // Fall back to inserting a temporary element
+        if (x == 0 && y == 0) {
+          var span = doc.createElement("span");
+          if (span.getClientRects) {
+            // Ensure span has dimensions and position by
+            // adding a zero-width space character
+            span.appendChild(doc.createTextNode("\u200b"));
+            range.insertNode(span);
+            rect = span.getClientRects()[0];
+            x = rect.left;
+            y = rect.top;
+            bottom = rect.bottom;
+            var spanParent = span.parentNode;
+            if (spanParent) {
+              spanParent.removeChild(span);
+              spanParent.normalize();
+            }
+          }
+        }
+      }
+    }
+    return { x: x, y: y, bottom: bottom };
+  };
+
+  window.setPaddingTopBottom = (top, bottom) => {
+    if (editorContainerRef.current) {
+      editorContainerRef.current.style.marginTop = `${top}px`; // note: always set margin-top in here (do NOT use padding-top)
+    }
+    if (kbRef.current) {
+      kbRef.current.style.height = `${bottom}px`;
+    }
+    var carretObj = getCarret();
+    console.log({ carretObj });
+    window.onPaddingChanged?.(
+      JSON.stringify({
+        carretY: carretObj.yTop,
+        carretYBottom: carretObj.yBottom,
+      })
+    );
+  };
+
   return (
     <>
       <LexicalComposer initialConfig={editorConfig}>
-        <AutoFocusPlugin />
-        <MyFunctionPlugin />
-        <MentionsPlugin />
-        <AutoLinkPlugin />
-        <RichTextPlugin
-          contentEditable={
-            <div className="editor-input" ref={editorRef}>
-              <ContentEditable />
-            </div>
-          }
-          placeholder={
-            <div className="editor-placeholder">Enter some rich text...</div>
-          }
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-        {/* History Plugin is necessary if want to have undo, redo*/}
-        <HistoryPlugin />
-        <LinkPlugin />
-        {/* ListPlugin is necessary for numbered list, bullet list */}
-        <ListPlugin />
-        {/* CodeHighlightPlugin is necessary for code block */}
-        <CodeHighlightPlugin />
-        <ListMaxIndentLevelPlugin maxDepth={7} />
-        {/* <ContextMenuPlugin /> */}
-        {/* <TreeViewPlugin /> This plugin to use when debugging*/}
+        <div ref={editorContainerRef} className="editor-container">
+          <AutoFocusPlugin />
+          <MyFunctionPlugin />
+          <MentionsPlugin />
+          <AutoLinkPlugin />
+          <RichTextPlugin
+            contentEditable={
+              <div className="editor-input" ref={editorRef}>
+                <ContentEditable />
+              </div>
+            }
+            placeholder={
+              <div className="editor-placeholder">Enter some rich text...</div>
+            }
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          {/* History Plugin is necessary if want to have undo, redo*/}
+          <HistoryPlugin />
+          <LinkPlugin />
+          {/* ListPlugin is necessary for numbered list, bullet list */}
+          <ListPlugin />
+          {/* CodeHighlightPlugin is necessary for code block */}
+          <CodeHighlightPlugin />
+          <ListMaxIndentLevelPlugin maxDepth={7} />
+          {/* <ContextMenuPlugin /> */}
+          {/* <TreeViewPlugin /> This plugin to use when debugging*/}
+        </div>
       </LexicalComposer>
+      <div ref={kbRef} style={{ height: "0px", width: "100%" }}></div>
     </>
   );
 }

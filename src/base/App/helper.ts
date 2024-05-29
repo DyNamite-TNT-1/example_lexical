@@ -1,4 +1,4 @@
-import { RangeSelection } from "lexical";
+import { $getNearestNodeFromDOMNode, $isDecoratorNode, RangeSelection } from "lexical";
 import {
     $isAtNodeEnd,
 } from "@lexical/selection";
@@ -59,4 +59,9 @@ export function tryToPositionRange(
     }
 
     return true;
+}
+
+export function $isTargetWithinDecorator(target: HTMLElement): boolean {
+    const node = $getNearestNodeFromDOMNode(target);
+    return $isDecoratorNode(node);
 }
