@@ -7,6 +7,8 @@ export
     onChangeStatusButton?: (json: any) => void;
     getCarret?: (json: any) => void;
     updateHeight?: (json: any) => void;
+    initCompleted?: () => void;
+    onPaddingChanged?: (json: any) => void;
 }
 
 declare global {
@@ -31,11 +33,11 @@ declare global {
         formatQuote: () => void;
         formatCodeBlock: () => void;
         NHAN: HTMLEditorJavascriptInterface;
-        //
+        webkit: any; // ios
+        HTMLEditorChannel: any; // ios
         setHTMLContent: (baseUrl: string, content: string, placeHolder: string) => void;
-        initCompleted?: () => void;
         setPaddingTopBottom: (top: number, bottom: number) => void;
         getSelectionCoords: (win?: Window) => any;
-        onPaddingChanged?: (json: any) => void;
+        getHTMLContent: () => string;
     }
 }

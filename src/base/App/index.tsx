@@ -58,7 +58,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { $generateNodesFromDOM } from "@lexical/html";
+import { $generateNodesFromDOM, $generateHtmlFromNodes } from "@lexical/html";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
@@ -74,9 +74,12 @@ import MentionsPlugin from "@base/plugins/MentionsPlugin";
 import {
   blockTypeToBlockName,
   getSelectedNode,
+  groupNodes,
+  sendMessageToChannel,
   tryToPositionRange,
 } from "./helper";
 import { MentionNode } from "@base/nodes/MentionNode";
+import { ImageNode } from "@base/nodes/ImageNode";
 const editorConfig = {
   namespace: "React.js Demo",
   nodes: [
@@ -92,6 +95,7 @@ const editorConfig = {
     AutoLinkNode,
     LinkNode,
     MentionNode,
+    ImageNode,
   ],
 
   onError(error: Error) {
@@ -290,10 +294,6 @@ function MyFunctionPlugin() {
   }, [activeEditor, position]);
 
   useEffect(() => {
-    window.initCompleted?.();
-  }, [editor]);
-
-  useEffect(() => {
     return editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
       (_payload, newEditor) => {
@@ -339,12 +339,17 @@ function MyFunctionPlugin() {
   }, [$updateToolbar, activeEditor, editor]);
 
   useEffect(() => {
-    // console.log({ styleMap });
+    //To Android
     window.NHAN?.onChangeStatusButton?.(JSON.stringify(styleMap));
+    // To IOS
+    sendMessageToChannel({
+      action: "onChangeStatusButton",
+      data: styleMap,
+    });
   }, [styleMap]);
 
   useEffect(() => {
-    console.log(position);
+    // console.log(position);
     window.NHAN?.getCarret?.(JSON.stringify(position));
   }, [position]);
 
@@ -483,8 +488,13 @@ function MyFunctionPlugin() {
       const root = $getRoot();
       root.clear();
       nodes.forEach((node) => {
-        console.log(node, $isElementNode(node));
-        if ($isElementNode(node)) {
+        // console.log(node, $isElementNode(node));
+        /**
+         * TODO-ANHDUC
+         * I found that Link Node is an Element Node, but Link Node need to wrapped by ParagraphNode.
+         * If not => bug when editting.
+         */
+        if ($isElementNode(node) && !$isLinkNode(node)) {
           root.append(node);
         } else {
           const paragraphNode = $createParagraphNode();
@@ -492,7 +502,47 @@ function MyFunctionPlugin() {
           root.append(paragraphNode);
         }
       });
+      // const groupedNodes = groupNodes(nodes);
+      // console.log(groupedNodes);
+
+      // groupedNodes.forEach((group) => {
+      //   if ($isElementNode(group[0]) && !$isLinkNode(group[0])) {
+      //     root.append(group[0]);
+      //   } else {
+      //     const paragraphNode = $createParagraphNode();
+      //     group.forEach((node) => {
+      //       paragraphNode.append(node);
+      //     });
+      //     root.append(paragraphNode);
+      //   }
+      // });
     });
+    setTimeout(() => {
+      // To Android
+      window.NHAN?.initCompleted?.();
+      // To IOS
+      sendMessageToChannel({
+        action: "initCompleted",
+        data: {},
+      });
+    }, 50);
+  };
+
+  window.getHTMLContent = () => {
+    let fHtmlStr = "";
+    try {
+      editor.getEditorState().read(() => {
+        fHtmlStr = $generateHtmlFromNodes(editor, null);
+        console.log(fHtmlStr);
+      });
+      // editor.update(() => {
+      //   fHtmlStr = $generateHtmlFromNodes(editor, null);
+      // });
+    } catch (error) {
+      console.log(error);
+    }
+
+    return fHtmlStr;
   };
 
   return null;
@@ -596,13 +646,21 @@ export default function App() {
       kbRef.current.style.height = `${bottom}px`;
     }
     var carretObj = getCarret();
-    console.log({ carretObj });
-    window.onPaddingChanged?.(
+    // To Android
+    window.NHAN?.onPaddingChanged?.(
       JSON.stringify({
         carretY: carretObj.yTop,
         carretYBottom: carretObj.yBottom,
       })
     );
+    //To IOS
+    sendMessageToChannel({
+      action: "onPaddingChanged",
+      data: {
+        carretY: carretObj.yTop,
+        carretYBottom: carretObj.yBottom,
+      },
+    });
   };
 
   return (
@@ -616,7 +674,7 @@ export default function App() {
           <RichTextPlugin
             contentEditable={
               <div className="editor-input" ref={editorRef}>
-                <ContentEditable />
+                <ContentEditable className="ContentEditable__root" />
               </div>
             }
             placeholder={

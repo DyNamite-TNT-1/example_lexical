@@ -877,7 +877,6 @@ export function registerRichText(editor: LexicalEditor): () => void {
 
                     event.preventDefault();
                 }
-                // event.preventDefault();
                 return editor.dispatchCommand(DELETE_CHARACTER_COMMAND, true);
             },
             COMMAND_PRIORITY_EDITOR,
