@@ -133,6 +133,21 @@ h1 {
   color: rgba(0, 0, 0, 0.5);
 }
 
+.PlaygroundEditorTheme__table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  overflow-y: scroll;
+  overflow-x: scroll;
+  table-layout: fixed;
+}
+
+.PlaygroundEditorTheme__tableCell {
+  border: 1px solid #bbb;
+  min-width: 75px;
+  padding: 3px 4px;
+  position: relative;
+}
+
 .editor-tokenComment {
   color: slategray;
 }
@@ -198,7 +213,7 @@ h1 {
   margin: 0;
   margin-left: 20px;
   font-size: 15px;
-  color: rgb(101, 103, 107);
+  /* color: rgb(101, 103, 107); */
   border-left-color: rgb(206, 208, 212);
   border-left-width: 4px;
   border-left-style: solid;

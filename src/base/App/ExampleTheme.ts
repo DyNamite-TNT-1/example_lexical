@@ -40,4 +40,9 @@ export default {
         underline: 'editor-text-underline',
         underlineStrikethrough: 'editor-text-underlineStrikethrough',
     },
+    table: 'PlaygroundEditorTheme__table',
+    tableAddColumns: 'PlaygroundEditorTheme__tableAddColumns',
+    tableAddRows: 'PlaygroundEditorTheme__tableAddRows',
+    tableCell: 'PlaygroundEditorTheme__tableCell',
+    tableCellHeader: 'PlaygroundEditorTheme__tableCellHeader',
 };

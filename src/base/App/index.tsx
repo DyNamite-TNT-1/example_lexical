@@ -34,6 +34,7 @@ import {
   ElementFormatType,
   $isElementNode,
   $getRoot,
+  TextNode,
 } from "lexical";
 import { $isParentElementRTL, $setBlocksType } from "@lexical/selection";
 import {
@@ -80,9 +81,15 @@ import {
 } from "./helper";
 import { MentionNode } from "@base/nodes/MentionNode";
 import { ImageNode } from "@base/nodes/ImageNode";
+import { ExtendedTextNode } from "@base/nodes/ExtendedTextNode";
 const editorConfig = {
   namespace: "React.js Demo",
   nodes: [
+    ExtendedTextNode,
+    {
+      replace: TextNode,
+      with: (node: TextNode) => new ExtendedTextNode(node.__text),
+    },
     HeadingNode,
     ListNode,
     ListItemNode,
@@ -479,43 +486,46 @@ function MyFunctionPlugin() {
     content: string,
     placeHolder: string
   ) => {
-    console.log("@param [content]:", content);
+    // console.log("@param html [content]:", Base64.decode(content));
     editor.update(() => {
       const parser = new DOMParser();
       const dom = parser.parseFromString(Base64.decode(content), "text/html");
-
       const nodes = $generateNodesFromDOM(editor, dom);
       const root = $getRoot();
       root.clear();
-      nodes.forEach((node) => {
-        // console.log(node, $isElementNode(node));
-        /**
-         * TODO-ANHDUC
-         * I found that Link Node is an Element Node, but Link Node need to wrapped by ParagraphNode.
-         * If not => bug when editting.
-         */
-        if ($isElementNode(node) && !$isLinkNode(node)) {
-          root.append(node);
-        } else {
-          const paragraphNode = $createParagraphNode();
-          paragraphNode.append(node);
-          root.append(paragraphNode);
-        }
-      });
-      // const groupedNodes = groupNodes(nodes);
-      // console.log(groupedNodes);
-
-      // groupedNodes.forEach((group) => {
-      //   if ($isElementNode(group[0]) && !$isLinkNode(group[0])) {
-      //     root.append(group[0]);
+      /**
+       * TODO-ANHDUC
+       * I found that Link Node is an Element Node, but Link Node need to wrapped by ParagraphNode.
+       * If not => bug when editting.
+       */
+      /////////// METHOD 1
+      // nodes.forEach((node) => {
+      //   // console.log(node, $isElementNode(node));
+      //   if ($isElementNode(node) && !$isLinkNode(node)) {
+      //     root.append(node);
       //   } else {
       //     const paragraphNode = $createParagraphNode();
-      //     group.forEach((node) => {
-      //       paragraphNode.append(node);
-      //     });
+      //     paragraphNode.append(node);
       //     root.append(paragraphNode);
       //   }
       // });
+      ////////// METHOD 2
+      const groupedNodes = groupNodes(nodes);
+      // console.log(groupedNodes);
+
+      groupedNodes.forEach((group) => {
+        if ($isElementNode(group[0]) && !$isLinkNode(group[0])) {
+          // console.log("alone", group[0]);
+          root.append(group[0]);
+        } else {
+          const paragraphNode = $createParagraphNode();
+          group.forEach((node) => {
+            // console.log(node);
+            paragraphNode.append(node);
+          });
+          root.append(paragraphNode);
+        }
+      });
     });
     setTimeout(() => {
       // To Android
@@ -536,8 +546,8 @@ function MyFunctionPlugin() {
         // console.log(fHtmlStr);
       });
     } catch (error) {
-      console.log(error);
-      return "Failed to parse content HTML!";
+      // console.log(error);
+      return "failed_parse_html";
     }
 
     return fHtmlStr;
