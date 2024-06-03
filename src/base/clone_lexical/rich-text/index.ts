@@ -871,7 +871,7 @@ export function registerRichText(editor: LexicalEditor): () => void {
                         (!is_android) &&
                         CAN_USE_BEFORE_INPUT
                     ) {
-                        console.log("is mobile 2", is_android);
+                        console.log("is mobile: ", is_android);
                         return false;
                     }
 

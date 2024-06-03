@@ -533,13 +533,11 @@ function MyFunctionPlugin() {
     try {
       editor.getEditorState().read(() => {
         fHtmlStr = $generateHtmlFromNodes(editor, null);
-        console.log(fHtmlStr);
+        // console.log(fHtmlStr);
       });
-      // editor.update(() => {
-      //   fHtmlStr = $generateHtmlFromNodes(editor, null);
-      // });
     } catch (error) {
       console.log(error);
+      return "Failed to parse content HTML!";
     }
 
     return fHtmlStr;
