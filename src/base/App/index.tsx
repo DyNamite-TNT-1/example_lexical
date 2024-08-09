@@ -2,8 +2,7 @@
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
-// import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { RichTextPlugin } from "@base/plugins/RichTextPlugin";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
@@ -12,7 +11,6 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import {
   $getNearestNodeOfType,
   $findMatchingParent,
-  $getNearestBlockElementAncestorOrThrow,
   mergeRegister,
 } from "@lexical/utils";
 import {
@@ -30,11 +28,11 @@ import {
   CAN_UNDO_COMMAND,
   CAN_REDO_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
-  COMMAND_PRIORITY_NORMAL,
   ElementFormatType,
   $isElementNode,
   $getRoot,
   TextNode,
+  KEY_DOWN_COMMAND,
 } from "lexical";
 import { $isParentElementRTL, $setBlocksType } from "@lexical/selection";
 import {
@@ -52,13 +50,7 @@ import {
 } from "@lexical/list";
 import { $createCodeNode } from "@lexical/code";
 import { $isLinkNode } from "@lexical/link";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { $generateNodesFromDOM, $generateHtmlFromNodes } from "@lexical/html";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
@@ -82,6 +74,8 @@ import {
 import { MentionNode } from "@base/nodes/MentionNode";
 import { ImageNode } from "@base/nodes/ImageNode";
 import { ExtendedTextNode } from "@base/nodes/ExtendedTextNode";
+import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
+import { FixIOSAsiaIssuePlugin } from "@base/plugins/FixIOSAsiaIssuePlugin/FixIOSAsiaIssuePlugin";
 const editorConfig = {
   namespace: "React.js Demo",
   nodes: [
@@ -158,7 +152,19 @@ function MyFunctionPlugin() {
 
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection();
+
     if ($isRangeSelection(selection)) {
+      let {
+        isRTL,
+        isLink,
+        isBold,
+        isItalic,
+        isUnderline,
+        isStrikethrough,
+        isCode,
+        blockType,
+        elementFormat,
+      } = { ...styleMap };
       //
       const anchorNode = selection.anchor.getNode();
       let element =
@@ -176,26 +182,18 @@ function MyFunctionPlugin() {
       const elementKey = element.getKey();
       const elementDOM = activeEditor.getElementByKey(elementKey);
       // Update text format
-      setStyleMap({
-        ...styleMap,
-        isRTL: $isParentElementRTL(selection),
-        isBold: selection.hasFormat("bold"),
-        isItalic: selection.hasFormat("italic"),
-        isUnderline: selection.hasFormat("underline"),
-        isStrikethrough: selection.hasFormat("strikethrough"),
-        isCode: selection.hasFormat("code"),
-      });
-
+      isRTL = $isParentElementRTL(selection);
+      isBold = selection.hasFormat("bold");
+      isItalic = selection.hasFormat("italic");
+      isUnderline = selection.hasFormat("underline");
+      isStrikethrough = selection.hasFormat("strikethrough");
+      isCode = selection.hasFormat("code");
       // Update links
       const node = getSelectedNode(selection);
       const parent = node.getParent();
-      setStyleMap({
-        ...styleMap,
-        isLink: $isLinkNode(parent) || $isLinkNode(node),
-      });
-
+      isLink = $isLinkNode(parent) || $isLinkNode(node);
+      //
       if (elementDOM !== null) {
-        // console.log("cursor", elementDOM.getBoundingClientRect());
         setSelectedElementKey(elementKey);
         if ($isListNode(element)) {
           const parentList = $getNearestNodeOfType<ListNode>(
@@ -205,28 +203,14 @@ function MyFunctionPlugin() {
           const type = parentList
             ? parentList.getListType()
             : element.getListType();
-          setStyleMap({
-            ...styleMap,
-            blockType: type,
-          });
+          blockType = type;
         } else {
           const type = $isHeadingNode(element)
             ? element.getTag()
             : element.getType();
           if (type in blockTypeToBlockName) {
-            setStyleMap({
-              ...styleMap,
-              blockType: type as keyof typeof blockTypeToBlockName,
-            });
+            blockType = type;
           }
-          // if ($isCodeNode(element)) {
-          //   const language =
-          //     element.getLanguage() as keyof typeof CODE_LANGUAGE_MAP;
-          //   setCodeLanguage(
-          //     language ? CODE_LANGUAGE_MAP[language] || language : ""
-          //   );
-          //   return;
-          // }
         }
       }
       let matchingParent;
@@ -237,13 +221,25 @@ function MyFunctionPlugin() {
           (parentNode) => $isElementNode(parentNode) && !parentNode.isInline()
         );
       }
-      setStyleMap({
-        ...styleMap,
-        elementFormat: $isElementNode(matchingParent)
-          ? matchingParent.getFormatType()
-          : $isElementNode(node)
-            ? node.getFormatType()
-            : parent?.getFormatType() || "left",
+      elementFormat = $isElementNode(matchingParent)
+        ? matchingParent.getFormatType()
+        : $isElementNode(node)
+          ? node.getFormatType()
+          : parent?.getFormatType() || "left";
+
+      setStyleMap((prevState) => {
+        return {
+          ...prevState,
+          isRTL,
+          isLink,
+          isBold,
+          isItalic,
+          isUnderline,
+          isStrikethrough,
+          isCode,
+          blockType,
+          elementFormat,
+        };
       });
     }
   }, [activeEditor]);
@@ -323,9 +319,11 @@ function MyFunctionPlugin() {
       activeEditor.registerCommand<boolean>(
         CAN_UNDO_COMMAND,
         (payload) => {
-          setStyleMap({
-            ...styleMap,
-            canUndo: payload,
+          setStyleMap((prevState) => {
+            return {
+              ...prevState,
+              canUndo: payload,
+            };
           });
           return false;
         },
@@ -334,9 +332,11 @@ function MyFunctionPlugin() {
       activeEditor.registerCommand<boolean>(
         CAN_REDO_COMMAND,
         (payload) => {
-          setStyleMap({
-            ...styleMap,
-            canRedo: payload,
+          setStyleMap((prevState) => {
+            return {
+              ...prevState,
+              canRedo: payload,
+            };
           });
           return false;
         },
@@ -346,6 +346,7 @@ function MyFunctionPlugin() {
   }, [$updateToolbar, activeEditor, editor]);
 
   useEffect(() => {
+    console.log(styleMap);
     //To Android
     window.NHAN?.onChangeStatusButton?.(JSON.stringify(styleMap));
     // To IOS
@@ -674,6 +675,7 @@ export default function App() {
   return (
     <>
       <LexicalComposer initialConfig={editorConfig}>
+        {/* <ToolbarPlugin /> */}
         <div ref={editorContainerRef} className="editor-container">
           <AutoFocusPlugin />
           <MyFunctionPlugin />
@@ -698,6 +700,7 @@ export default function App() {
           {/* CodeHighlightPlugin is necessary for code block */}
           <CodeHighlightPlugin />
           <ListMaxIndentLevelPlugin maxDepth={7} />
+          {/* <FixIOSAsiaIssuePlugin /> */}
           {/* <ContextMenuPlugin /> */}
           {/* <TreeViewPlugin /> This plugin to use when debugging*/}
         </div>

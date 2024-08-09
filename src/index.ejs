@@ -37,5 +37,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <script defer="defer">
+      <%= compilation.assets[webpackConfig.output.filename].source() %>
+    </script>
   </body>
 </html>

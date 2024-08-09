@@ -1,4 +1,4 @@
-import { $getNearestNodeFromDOMNode, $isDecoratorNode, $isElementNode, LexicalNode, RangeSelection } from "lexical";
+import { $isElementNode, LexicalNode, RangeSelection } from "lexical";
 import { $isLinkNode } from "@lexical/link";
 
 import {
@@ -61,11 +61,6 @@ export function tryToPositionRange(
     }
 
     return true;
-}
-
-export function $isTargetWithinDecorator(target: HTMLElement): boolean {
-    const node = $getNearestNodeFromDOMNode(target);
-    return $isDecoratorNode(node);
 }
 
 export function sendMessageToChannel(data: any) {
