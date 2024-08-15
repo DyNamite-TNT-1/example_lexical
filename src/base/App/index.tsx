@@ -1,11 +1,12 @@
 // third-party
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
@@ -76,6 +77,7 @@ import { ImageNode } from "@base/nodes/ImageNode";
 import { ExtendedTextNode } from "@base/nodes/ExtendedTextNode";
 import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
 import { FixIOSAsiaIssuePlugin } from "@base/plugins/FixIOSAsiaIssuePlugin/FixIOSAsiaIssuePlugin";
+import { convertLexicalToBlocks } from "@base/converter/converter";
 const editorConfig = {
   namespace: "React.js Demo",
   nodes: [
@@ -84,19 +86,14 @@ const editorConfig = {
       replace: TextNode,
       with: (node: TextNode) => new ExtendedTextNode(node.__text),
     },
-    HeadingNode,
     ListNode,
     ListItemNode,
     QuoteNode,
     CodeNode,
     CodeHighlightNode,
-    TableNode,
-    TableCellNode,
-    TableRowNode,
     AutoLinkNode,
     LinkNode,
     MentionNode,
-    ImageNode,
   ],
 
   onError(error: Error) {
@@ -119,6 +116,8 @@ function MyFunctionPlugin() {
   const [selectedElementKey, setSelectedElementKey] = useState<string | null>(
     null
   );
+
+  const [canSubmit, setCanSubmit] = useState<boolean>(false);
 
   const [styleMap, setStyleMap] = useState<{
     isRTL: boolean;
@@ -145,10 +144,19 @@ function MyFunctionPlugin() {
     blockType: "paragraph",
     elementFormat: "left",
   });
+
   const [position, setPosition] = useState<{ top: number; left: number }>({
     top: 0,
     left: 0,
   });
+
+  const $updateCanSubmit = useCallback(() => {
+    activeEditor.getEditorState().read(() => {
+      const root = $getRoot();
+      const isNotEmpty = root.getTextContent().trim().length > 0;
+      setCanSubmit(isNotEmpty);
+    });
+  }, [activeEditor]);
 
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -314,6 +322,7 @@ function MyFunctionPlugin() {
       activeEditor.registerUpdateListener(({ editorState }) => {
         editorState.read(() => {
           $updateToolbar();
+          $updateCanSubmit();
         });
       }),
       activeEditor.registerCommand<boolean>(
@@ -346,15 +355,25 @@ function MyFunctionPlugin() {
   }, [$updateToolbar, activeEditor, editor]);
 
   useEffect(() => {
-    console.log(styleMap);
     //To Android
     window.NHAN?.onChangeStatusButton?.(JSON.stringify(styleMap));
-    // To IOS
+    // To IOS || Flutter
     sendMessageToChannel({
       action: "onChangeStatusButton",
       data: styleMap,
     });
   }, [styleMap]);
+
+  useEffect(() => {
+    console.log({ canSubmit });
+    //To Android
+    window.NHAN?.onChangeCanSubmit?.(JSON.stringify({ canSubmit }));
+    // To IOS || Flutter
+    sendMessageToChannel({
+      action: "onChangeCanSubmit",
+      data: { canSubmit },
+    });
+  }, [canSubmit]);
 
   useEffect(() => {
     // console.log(position);
@@ -554,6 +573,25 @@ function MyFunctionPlugin() {
     return fHtmlStr;
   };
 
+  window.onSubmit = () => {
+    let result: { blocks: any[]; plainText: string } = {
+      blocks: [],
+      plainText: "",
+    };
+    try {
+      editor.update(() => {
+        const root = $getRoot();
+        result.blocks = convertLexicalToBlocks(editor);
+        result.plainText = root.getTextContent();
+        root.clear();
+      });
+    } catch (error) {
+      console.log("error onSubmit", error);
+      return { blocks: [], plainText: "", error: "failed_submit" };
+    }
+    return result;
+  };
+
   return null;
 }
 
@@ -697,6 +735,8 @@ export default function App() {
           <LinkPlugin />
           {/* ListPlugin is necessary for numbered list, bullet list */}
           <ListPlugin />
+          {/* CheckListPlugin is necessary for checklist */}
+          <CheckListPlugin />
           {/* CodeHighlightPlugin is necessary for code block */}
           <CodeHighlightPlugin />
           <ListMaxIndentLevelPlugin maxDepth={7} />
