@@ -10,6 +10,7 @@ import {
   type Spread,
   TextNode,
 } from "lexical";
+import { addClassNamesToElement } from "@lexical/utils";
 
 export type SerializedMentionNode = Spread<
   {
@@ -22,10 +23,10 @@ export type SerializedMentionNode = Spread<
 function $convertMentionElement(
   domNode: HTMLElement
 ): DOMConversionOutput | null {
-  const textContent = domNode.textContent;
+  const dataLabel = domNode.getAttribute("data-value");
   const dataId = domNode.getAttribute("data-id");
-  if (textContent !== null) {
-    const node = $createMentionNode(textContent, dataId ?? undefined);
+  if (dataLabel !== null) {
+    const node = $createMentionNode(dataLabel, dataId ?? undefined);
     return {
       node,
     };
@@ -34,7 +35,6 @@ function $convertMentionElement(
   return null;
 }
 
-const mentionStyle = "background-color: rgba(24, 119, 232, 0.2)";
 export class MentionNode extends TextNode {
   __mention: string;
   /**
@@ -89,8 +89,7 @@ export class MentionNode extends TextNode {
 
   createDOM(config: EditorConfig): HTMLElement {
     const dom = super.createDOM(config);
-    dom.style.cssText = mentionStyle;
-    dom.className = "mention";
+    addClassNamesToElement(dom, config.theme.mention);
     if (this.__dataId) {
       dom.setAttribute("data-id", this.__dataId);
     }
@@ -109,7 +108,7 @@ export class MentionNode extends TextNode {
 
   static importDOM(): DOMConversionMap | null {
     return {
-      span: (domNode: HTMLElement) => {
+      a: (domNode: HTMLElement) => {
         if (!domNode.hasAttribute("data-lexical-mention")) {
           return null;
         }
@@ -132,6 +131,14 @@ export class MentionNode extends TextNode {
   canInsertTextAfter(): boolean {
     return false;
   }
+
+  getDataId(): string | undefined {
+    return this.__dataId;
+  }
+
+  getMention(): string {
+    return this.__mention;
+  }
 }
 
 export function $createMentionNode(
@@ -144,7 +151,7 @@ export function $createMentionNode(
     undefined,
     dataId
   );
-  mentionNode.setMode("segmented").toggleDirectionless();
+  mentionNode.setMode("token").toggleDirectionless();
   return $applyNodeReplacement(mentionNode);
 }
 

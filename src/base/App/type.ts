@@ -1,3 +1,4 @@
+import { EmojiLexicalType } from "@base/types/emoji";
 import { HeadingTagType } from "@lexical/rich-text";
 
 export interface HTMLEditorJavascriptInterface {
@@ -25,11 +26,12 @@ declare global {
     alignRight: () => void;
     alignJustify: () => void;
     formatParagraph: () => void;
-    formatHeading: (headingSize: HeadingTagType) => void;
+    formatHeading: (headingTag: HeadingTagType) => void;
     formatNumberedList: () => void;
     formatBulletList: () => void;
     formatQuote: () => void;
     formatCodeBlock: () => void;
+    addEmoji: (emoji: EmojiLexicalType) => void;
     NHAN: HTMLEditorJavascriptInterface;
     webkit: any; // ios
     HTMLEditorChannel: any; // ios

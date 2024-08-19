@@ -23,4 +23,5 @@ export enum BlockElementType {
   USER = "USER",
   CHANNEL = "CHANNEL",
   TEXT = "TEXT",
+  EMOJI = "EMOJI",
 }

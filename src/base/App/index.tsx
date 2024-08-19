@@ -53,13 +53,8 @@ import { $createCodeNode } from "@lexical/code";
 import { $isLinkNode } from "@lexical/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { $generateNodesFromDOM, $generateHtmlFromNodes } from "@lexical/html";
-import { HeadingNode, QuoteNode } from "@lexical/rich-text";
-import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { CodeHighlightNode, CodeNode } from "@lexical/code";
-import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { Base64 } from "js-base64";
 // base
-import ExampleTheme from "./ExampleTheme";
 import "@base/assets/css/app.css";
 import AutoLinkPlugin from "@base/plugins/AutoLinkPlugin";
 import CodeHighlightPlugin from "@base/plugins/CodeHighlightPlugin";
@@ -72,35 +67,12 @@ import {
   sendMessageToChannel,
   tryToPositionRange,
 } from "./helper";
-import { MentionNode } from "@base/nodes/MentionNode";
-import { ImageNode } from "@base/nodes/ImageNode";
-import { ExtendedTextNode } from "@base/nodes/ExtendedTextNode";
 import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
 import { FixIOSAsiaIssuePlugin } from "@base/plugins/FixIOSAsiaIssuePlugin/FixIOSAsiaIssuePlugin";
 import { convertLexicalToBlocks } from "@base/converter/converter";
-const editorConfig = {
-  namespace: "React.js Demo",
-  nodes: [
-    ExtendedTextNode,
-    {
-      replace: TextNode,
-      with: (node: TextNode) => new ExtendedTextNode(node.__text),
-    },
-    ListNode,
-    ListItemNode,
-    QuoteNode,
-    CodeNode,
-    CodeHighlightNode,
-    AutoLinkNode,
-    LinkNode,
-    MentionNode,
-  ],
-
-  onError(error: Error) {
-    throw error;
-  },
-  theme: ExampleTheme,
-};
+import editorConfig from "./config";
+import { EmojiLexicalType } from "@base/types/emoji";
+import { ADD_EMOJI_COMMAND, EmojiPlugin } from "@base/plugins/EmojiPlugin";
 
 function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -501,6 +473,10 @@ function MyFunctionPlugin() {
     }
   };
 
+  window.addEmoji = (emoji: EmojiLexicalType) => {
+    editor.dispatchCommand(ADD_EMOJI_COMMAND, emoji);
+  };
+
   window.setHTMLContent = (
     baseUrl: string,
     content: string,
@@ -716,6 +692,7 @@ export default function App() {
         {/* <ToolbarPlugin /> */}
         <div ref={editorContainerRef} className="editor-container">
           <AutoFocusPlugin />
+          <EmojiPlugin />
           <MyFunctionPlugin />
           <MentionsPlugin />
           <AutoLinkPlugin />

@@ -1,11 +1,13 @@
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-export default {
+import { QuoteNode } from "@lexical/rich-text";
+import { CodeHighlightNode, CodeNode } from "@lexical/code";
+import { AutoLinkNode, LinkNode } from "@lexical/link";
+import { TextNode } from "lexical";
+import { ListNode, ListItemNode } from "@lexical/list";
+import { MentionNode } from "@base/nodes/MentionNode";
+import { ExtendedTextNode } from "@base/nodes/ExtendedTextNode";
+import { EmojiNode } from "@base/nodes/EmojiNode";
+
+const configTheme = {
   code: "editor-code",
   link: "editor-link",
   list: {
@@ -40,4 +42,33 @@ export default {
     underline: "editor-text-underline",
     underlineStrikethrough: "editor-text-underlineStrikethrough",
   },
+  mention: "mention",
 };
+
+const editorConfig = {
+  namespace: "TeamChannel",
+  // NOTICE: Be sure Mention Node stands HIGHER than Link Node
+  nodes: [
+    MentionNode,
+    ExtendedTextNode,
+    {
+      replace: TextNode,
+      with: (node: TextNode) => new ExtendedTextNode(node.__text),
+    },
+    ListNode,
+    ListItemNode,
+    QuoteNode,
+    CodeNode,
+    CodeHighlightNode,
+    AutoLinkNode,
+    LinkNode,
+    EmojiNode,
+  ],
+
+  onError(error: Error) {
+    throw error;
+  },
+  theme: configTheme,
+};
+
+export default editorConfig;

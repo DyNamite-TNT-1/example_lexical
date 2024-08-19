@@ -30,6 +30,7 @@ import {
   ListContainerType,
   BlockElementType,
 } from "./types";
+import { $isEmojiNode } from "@base/nodes/EmojiNode";
 
 export const FORMAT_PREDICATES_V2 = [
   (node: TextNode | RangeSelection) =>
@@ -118,11 +119,25 @@ export function getInlineTypeElement(node: LexicalNode) {
       type: BlockElementType.USER,
       text: node.getTextContent(),
       metaData: {
-        dataId: node.__dataId,
-        dataLabel: node.__text,
+        dataId: node.getDataId(),
+        dataLabel: node.getMention(),
       },
     };
   }
+
+  if ($isEmojiNode(node)) {
+    return {
+      key: node.getKey(),
+      parent: node.__parent,
+      type: BlockElementType.EMOJI,
+      text: node.getTextContent(),
+      metaData: {
+        dataId: node.getDataId(),
+        dataLabel: node.getTextContent(),
+      },
+    };
+  }
+
   if ($isLineBreakNode(node)) {
     return {
       key: node.getKey(),
@@ -130,7 +145,10 @@ export function getInlineTypeElement(node: LexicalNode) {
       type: BlockElementType.TEXT,
       text: "\n",
     };
-  } else if ($isTextNode(node)) {
+  }
+
+  // NOTICE: Be sure check Text Node at the END
+  if ($isTextNode(node)) {
     let formats = FORMAT_PREDICATES_V2.map((predicate) => {
       const result = predicate(node);
       return result ? result : null;
@@ -152,14 +170,14 @@ export function getInlineTypeElement(node: LexicalNode) {
       text: node.getTextContent(),
       style: combinedStyles,
     };
-  } else {
-    return {
-      key: node.getKey(),
-      parent: node.__parent,
-      type: "unknown" + node.getType(),
-      text: node.getTextContent(),
-    };
   }
+
+  return {
+    key: node.getKey(),
+    parent: node.__parent,
+    type: "unknown" + node.getType(),
+    text: node.getTextContent(),
+  };
 }
 
 export function getBlockTypeElement(node: LexicalNode) {
@@ -219,6 +237,9 @@ export function getBlockTypeElement(node: LexicalNode) {
       key: node.getKey(),
       parent: node.__parent,
       type: BlockElementType.RICH_TEXT_QUOTE,
+      style: {
+        textAlign: node.getFormatType(),
+      },
       elements: [] as any[],
     };
   }
