@@ -56,7 +56,10 @@ import "@base/assets/css/app.css";
 import AutoLinkPlugin from "@base/plugins/AutoLinkPlugin";
 import CodeHighlightPlugin from "@base/plugins/CodeHighlightPlugin";
 import ListMaxIndentLevelPlugin from "@base/plugins/ListMaxIndentLevelPlugin";
-import MentionsPlugin from "@base/plugins/MentionsPlugin";
+import {
+  ADD_MENTION_COMMAND,
+  MentionsPlugin,
+} from "@base/plugins/MentionsPlugin";
 import {
   blockTypeToBlockName,
   getSelectedNode,
@@ -70,6 +73,9 @@ import { convertLexicalToBlocks } from "@base/converter/converter";
 import editorConfig from "./config";
 import { EmojiLexicalType } from "@base/types/emoji";
 import { ADD_EMOJI_COMMAND, EmojiPlugin } from "@base/plugins/EmojiPlugin";
+import MyOnChangePlugin from "@base/plugins/MyOnChangePlugin";
+import { MentionLexicalType } from "@base/types/mention";
+import { INSERT_TEXT_COMMAND, InsertTextPlugin } from "@base/plugins/InsertTextPlugin";
 
 function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -471,6 +477,14 @@ function MyFunctionPlugin() {
     editor.dispatchCommand(ADD_EMOJI_COMMAND, emoji);
   };
 
+  window.addMention = (mention: MentionLexicalType) => {
+    editor.dispatchCommand(ADD_MENTION_COMMAND, mention);
+  };
+
+  window.insertText = (text: string) => {
+    editor.dispatchCommand(INSERT_TEXT_COMMAND, text);
+  }
+
   window.setHTMLContent = (
     baseUrl: string,
     content: string,
@@ -666,6 +680,24 @@ export default function App() {
     });
   };
 
+  const currentPlainTextRef = useRef<string | null>(null);
+
+  const onChange = (plainText: string) => {
+    if (
+      currentPlainTextRef.current == null ||
+      plainText !== currentPlainTextRef.current
+    ) {
+      currentPlainTextRef.current = plainText;
+      // To IOS && Flutter
+      sendMessageToChannel({
+        action: "onFetchPlainText",
+        data: {
+          plainText: plainText,
+        },
+      });
+    }
+  };
+
   return (
     <>
       <LexicalComposer initialConfig={editorConfig}>
@@ -674,7 +706,9 @@ export default function App() {
           <AutoFocusPlugin />
           <EmojiPlugin />
           <MyFunctionPlugin />
-          {/* <MentionsPlugin /> */}
+          <MyOnChangePlugin onChange={onChange} />
+          <MentionsPlugin />
+          <InsertTextPlugin />
           <AutoLinkPlugin />
           <RichTextPlugin
             contentEditable={

@@ -1,4 +1,5 @@
 import { EmojiLexicalType } from "@base/types/emoji";
+import { MentionLexicalType } from "@base/types/mention";
 import { HeadingTagType } from "@lexical/rich-text";
 
 export interface HTMLEditorJavascriptInterface {
@@ -32,6 +33,8 @@ declare global {
     formatQuote: () => void;
     formatCodeBlock: () => void;
     addEmoji: (emoji: EmojiLexicalType) => void;
+    addMention: (mention: MentionLexicalType) => void;
+    insertText: (text: string) => void;
     NHAN: HTMLEditorJavascriptInterface;
     webkit: any; // ios
     HTMLEditorChannel: any; // ios
