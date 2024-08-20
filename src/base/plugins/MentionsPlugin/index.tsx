@@ -666,10 +666,10 @@ export default function NewMentionsPlugin(): JSX.Element | null {
         anchorElementRef,
         { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }
       ) => {
-        console.log(
-          "anchor",
-          anchorElementRef.current?.getBoundingClientRect()
-        );
+        // console.log(
+        //   "anchor",
+        //   anchorElementRef.current?.getBoundingClientRect()
+        // );
         return anchorElementRef.current && results.length
           ? ReactDOM.createPortal(
               <div className="typeahead-popover mentions-menu">

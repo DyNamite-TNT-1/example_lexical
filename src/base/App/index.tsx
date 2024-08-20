@@ -32,8 +32,6 @@ import {
   ElementFormatType,
   $isElementNode,
   $getRoot,
-  TextNode,
-  KEY_DOWN_COMMAND,
 } from "lexical";
 import { $isParentElementRTL, $setBlocksType } from "@lexical/selection";
 import {
@@ -47,7 +45,6 @@ import {
   INSERT_UNORDERED_LIST_COMMAND,
   $isListNode,
   ListNode,
-  ListItemNode,
 } from "@lexical/list";
 import { $createCodeNode } from "@lexical/code";
 import { $isLinkNode } from "@lexical/link";
@@ -89,7 +86,7 @@ function MyFunctionPlugin() {
     null
   );
 
-  const [canSubmit, setCanSubmit] = useState<boolean>(false);
+  const canSubmitRef = useRef<boolean>(false);
 
   const [styleMap, setStyleMap] = useState<{
     isRTL: boolean;
@@ -117,7 +114,7 @@ function MyFunctionPlugin() {
     elementFormat: "left",
   });
 
-  const [position, setPosition] = useState<{ top: number; left: number }>({
+  const position = useRef<{ top: number; left: number }>({
     top: 0,
     left: 0,
   });
@@ -126,7 +123,17 @@ function MyFunctionPlugin() {
     activeEditor.getEditorState().read(() => {
       const root = $getRoot();
       const isNotEmpty = root.getTextContent().trim().length > 0;
-      setCanSubmit(isNotEmpty);
+      if (isNotEmpty !== canSubmitRef.current) {
+        // console.log(isNotEmpty);
+        canSubmitRef.current = isNotEmpty;
+        //To Android
+        window.NHAN?.onChangeCanSubmit?.({ canSubmit: isNotEmpty });
+        // To IOS || Flutter
+        sendMessageToChannel({
+          action: "onChangeCanSubmit",
+          data: { canSubmit: isNotEmpty },
+        });
+      }
     });
   }, [activeEditor]);
 
@@ -258,8 +265,8 @@ function MyFunctionPlugin() {
           if (isTmpRangePositioned !== null) {
             const tmpRangeDomRect = tmpRange.getBoundingClientRect();
             if (
-              tmpRangeDomRect.top !== position.top ||
-              tmpRangeDomRect.left !== position.left
+              tmpRangeDomRect.top !== position.current.top ||
+              tmpRangeDomRect.left !== position.current.left
             ) {
               top = tmpRangeDomRect.top;
               left = tmpRangeDomRect.left;
@@ -269,10 +276,13 @@ function MyFunctionPlugin() {
         }
       }
       if (
-        (top !== position.top || left !== position.left) &&
+        (top !== position.current.top || left !== position.current.left) &&
         (top !== 0 || left !== 0)
-      )
-        setPosition({ top: top, left: left });
+      ) {
+        // console.log("top:", top, "left:", left);
+        position.current = { top: top, left: left };
+        window.NHAN?.getCarret?.({ top: top, left: left });
+      }
     }
   }, [activeEditor, position]);
 
@@ -282,7 +292,7 @@ function MyFunctionPlugin() {
       (_payload, newEditor) => {
         $updateToolbar();
         setActiveEditor(newEditor);
-        // getCarret();
+        getCarret();
         return false;
       },
       COMMAND_PRIORITY_CRITICAL
@@ -335,22 +345,6 @@ function MyFunctionPlugin() {
       data: styleMap,
     });
   }, [styleMap]);
-
-  useEffect(() => {
-    console.log({ canSubmit });
-    //To Android
-    window.NHAN?.onChangeCanSubmit?.(JSON.stringify({ canSubmit }));
-    // To IOS || Flutter
-    sendMessageToChannel({
-      action: "onChangeCanSubmit",
-      data: { canSubmit },
-    });
-  }, [canSubmit]);
-
-  useEffect(() => {
-    // console.log(position);
-    window.NHAN?.getCarret?.(JSON.stringify(position));
-  }, [position]);
 
   window.undo = function () {
     editor.dispatchCommand(UNDO_COMMAND, undefined);
@@ -494,21 +488,7 @@ function MyFunctionPlugin() {
        * I found that Link Node is an Element Node, but Link Node need to wrapped by ParagraphNode.
        * If not => bug when editting.
        */
-      /////////// METHOD 1
-      // nodes.forEach((node) => {
-      //   // console.log(node, $isElementNode(node));
-      //   if ($isElementNode(node) && !$isLinkNode(node)) {
-      //     root.append(node);
-      //   } else {
-      //     const paragraphNode = $createParagraphNode();
-      //     paragraphNode.append(node);
-      //     root.append(paragraphNode);
-      //   }
-      // });
-      ////////// METHOD 2
       const groupedNodes = groupNodes(nodes);
-      // console.log(groupedNodes);
-
       groupedNodes.forEach((group) => {
         if ($isElementNode(group[0]) && !$isLinkNode(group[0])) {
           // console.log("alone", group[0]);
@@ -694,7 +674,7 @@ export default function App() {
           <AutoFocusPlugin />
           <EmojiPlugin />
           <MyFunctionPlugin />
-          <MentionsPlugin />
+          {/* <MentionsPlugin /> */}
           <AutoLinkPlugin />
           <RichTextPlugin
             contentEditable={
