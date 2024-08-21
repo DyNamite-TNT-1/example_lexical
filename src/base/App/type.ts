@@ -1,6 +1,7 @@
 import { EmojiLexicalType } from "@base/types/emoji";
 import { MentionLexicalType } from "@base/types/mention";
 import { HeadingTagType } from "@lexical/rich-text";
+import { ElementFormatType } from "lexical";
 
 export interface HTMLEditorJavascriptInterface {
   onChangeStatusButton?: (json: any) => void;
@@ -49,3 +50,17 @@ declare global {
     onSubmit: () => { blocks: any[]; plainText: string; error?: string };
   }
 }
+
+export type StyleMapType = {
+  isRTL: boolean;
+  isLink: boolean;
+  isBold: boolean;
+  isItalic: boolean;
+  isUnderline: boolean;
+  isStrikethrough: boolean;
+  isCode: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  blockType: string;
+  elementFormat: ElementFormatType;
+};

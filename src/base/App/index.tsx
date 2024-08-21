@@ -75,7 +75,11 @@ import { EmojiLexicalType } from "@base/types/emoji";
 import { ADD_EMOJI_COMMAND, EmojiPlugin } from "@base/plugins/EmojiPlugin";
 import MyOnChangePlugin from "@base/plugins/MyOnChangePlugin";
 import { MentionLexicalType } from "@base/types/mention";
-import { INSERT_TEXT_COMMAND, InsertTextPlugin } from "@base/plugins/InsertTextPlugin";
+import {
+  INSERT_TEXT_COMMAND,
+  InsertTextPlugin,
+} from "@base/plugins/InsertTextPlugin";
+import { StyleMapType } from "./type";
 
 function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -94,19 +98,7 @@ function MyFunctionPlugin() {
 
   const canSubmitRef = useRef<boolean>(false);
 
-  const [styleMap, setStyleMap] = useState<{
-    isRTL: boolean;
-    isLink: boolean;
-    isBold: boolean;
-    isItalic: boolean;
-    isUnderline: boolean;
-    isStrikethrough: boolean;
-    isCode: boolean;
-    canUndo: boolean;
-    canRedo: boolean;
-    blockType: string;
-    elementFormat: ElementFormatType;
-  }>({
+  const styleMapRef = useRef<StyleMapType>({
     isRTL: false,
     isLink: false,
     isBold: false,
@@ -147,17 +139,16 @@ function MyFunctionPlugin() {
     const selection = $getSelection();
 
     if ($isRangeSelection(selection)) {
-      let {
-        isRTL,
-        isLink,
-        isBold,
-        isItalic,
-        isUnderline,
-        isStrikethrough,
-        isCode,
-        blockType,
-        elementFormat,
-      } = { ...styleMap };
+      let isRTL = false;
+      let isLink = false;
+      let isBold = false;
+      let isItalic = false;
+      let isUnderline = false;
+      let isStrikethrough = false;
+      let isCode = false;
+      let blockType = "paragraph";
+      let elementFormat: ElementFormatType = "left";
+
       //
       const anchorNode = selection.anchor.getNode();
       let element =
@@ -220,20 +211,37 @@ function MyFunctionPlugin() {
           ? node.getFormatType()
           : parent?.getFormatType() || "left";
 
-      setStyleMap((prevState) => {
-        return {
-          ...prevState,
-          isRTL,
-          isLink,
-          isBold,
-          isItalic,
-          isUnderline,
-          isStrikethrough,
-          isCode,
-          blockType,
-          elementFormat,
-        };
-      });
+      if (
+        isRTL !== styleMapRef.current.isRTL ||
+        isLink !== styleMapRef.current.isLink ||
+        isBold !== styleMapRef.current.isBold ||
+        isItalic !== styleMapRef.current.isItalic ||
+        isUnderline !== styleMapRef.current.isUnderline ||
+        isStrikethrough !== styleMapRef.current.isStrikethrough ||
+        isCode !== styleMapRef.current.isCode ||
+        blockType !== styleMapRef.current.blockType ||
+        elementFormat !== styleMapRef.current.elementFormat
+      ) {
+        styleMapRef.current.isRTL = isRTL;
+        styleMapRef.current.isLink = isLink;
+        styleMapRef.current.isBold = isBold;
+        styleMapRef.current.isItalic = isItalic;
+        styleMapRef.current.isUnderline = isUnderline;
+        styleMapRef.current.isStrikethrough = isStrikethrough;
+        styleMapRef.current.isCode = isCode;
+        styleMapRef.current.blockType = blockType;
+        styleMapRef.current.elementFormat = elementFormat;
+        // console.log(styleMapRef.current);
+        //To Android
+        window.NHAN?.onChangeStatusButton?.(
+          JSON.stringify(styleMapRef.current)
+        );
+        // To IOS || Flutter
+        sendMessageToChannel({
+          action: "onChangeStatusButton",
+          data: styleMapRef.current,
+        });
+      }
     }
   }, [activeEditor]);
 
@@ -285,9 +293,15 @@ function MyFunctionPlugin() {
         (top !== position.current.top || left !== position.current.left) &&
         (top !== 0 || left !== 0)
       ) {
-        // console.log("top:", top, "left:", left);
         position.current = { top: top, left: left };
+        // console.log(position.current);
+        //To Android
         window.NHAN?.getCarret?.({ top: top, left: left });
+        // To IOS || Flutter
+        sendMessageToChannel({
+          action: "onChangeCarret",
+          data: { top: top, left: left },
+        });
       }
     }
   }, [activeEditor, position]);
@@ -316,12 +330,20 @@ function MyFunctionPlugin() {
       activeEditor.registerCommand<boolean>(
         CAN_UNDO_COMMAND,
         (payload) => {
-          setStyleMap((prevState) => {
-            return {
-              ...prevState,
-              canUndo: payload,
-            };
-          });
+          if (payload !== styleMapRef.current.canUndo) {
+            styleMapRef.current.canUndo = payload;
+            // console.log(styleMapRef.current);
+            //To Android
+            window.NHAN?.onChangeStatusButton?.(
+              JSON.stringify(styleMapRef.current)
+            );
+            // To IOS || Flutter
+            sendMessageToChannel({
+              action: "onChangeStatusButton",
+              data: styleMapRef.current,
+            });
+          }
+
           return false;
         },
         COMMAND_PRIORITY_CRITICAL
@@ -329,28 +351,25 @@ function MyFunctionPlugin() {
       activeEditor.registerCommand<boolean>(
         CAN_REDO_COMMAND,
         (payload) => {
-          setStyleMap((prevState) => {
-            return {
-              ...prevState,
-              canRedo: payload,
-            };
-          });
+          if (payload !== styleMapRef.current.canRedo) {
+            styleMapRef.current.canRedo = payload;
+            //  console.log(styleMapRef.current);
+            //To Android
+            window.NHAN?.onChangeStatusButton?.(
+              JSON.stringify(styleMapRef.current)
+            );
+            // To IOS || Flutter
+            sendMessageToChannel({
+              action: "onChangeStatusButton",
+              data: styleMapRef.current,
+            });
+          }
           return false;
         },
         COMMAND_PRIORITY_CRITICAL
       )
     );
   }, [$updateToolbar, activeEditor, editor]);
-
-  useEffect(() => {
-    //To Android
-    window.NHAN?.onChangeStatusButton?.(JSON.stringify(styleMap));
-    // To IOS || Flutter
-    sendMessageToChannel({
-      action: "onChangeStatusButton",
-      data: styleMap,
-    });
-  }, [styleMap]);
 
   window.undo = function () {
     editor.dispatchCommand(UNDO_COMMAND, undefined);
@@ -415,7 +434,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatHeading = (headingSize: HeadingTagType) => {
-    if (styleMap.blockType !== headingSize) {
+    if (styleMapRef.current.blockType !== headingSize) {
       editor.update(() => {
         const selection = $getSelection();
         $setBlocksType(selection, () => $createHeadingNode(headingSize));
@@ -424,7 +443,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatBulletList = () => {
-    if (styleMap.blockType !== "bullet") {
+    if (styleMapRef.current.blockType !== "bullet") {
       editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
     } else {
       window.formatParagraph();
@@ -432,7 +451,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatNumberedList = () => {
-    if (styleMap.blockType !== "number") {
+    if (styleMapRef.current.blockType !== "number") {
       editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
     } else {
       window.formatParagraph();
@@ -440,7 +459,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatQuote = () => {
-    if (styleMap.blockType !== "quote") {
+    if (styleMapRef.current.blockType !== "quote") {
       editor.update(() => {
         const selection = $getSelection();
 
@@ -452,7 +471,7 @@ function MyFunctionPlugin() {
   };
 
   window.formatCodeBlock = () => {
-    if (styleMap.blockType !== "code") {
+    if (styleMapRef.current.blockType !== "code") {
       editor.update(() => {
         let selection = $getSelection();
 
@@ -483,7 +502,7 @@ function MyFunctionPlugin() {
 
   window.insertText = (text: string) => {
     editor.dispatchCommand(INSERT_TEXT_COMMAND, text);
-  }
+  };
 
   window.setHTMLContent = (
     baseUrl: string,
