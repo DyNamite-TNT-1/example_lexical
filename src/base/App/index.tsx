@@ -306,6 +306,28 @@ function MyFunctionPlugin() {
     }
   }, [activeEditor, position]);
 
+  const getCurrentCursorPositionNodeType = useCallback(() => {
+    const selection = $getSelection();
+    if ($isRangeSelection(selection)) {
+      const anchor = selection.anchor;
+      const focus = selection.focus;
+      const anchorNode = anchor.getNode();
+      const focusNode = focus.getNode();
+      console.log(anchorNode, focusNode);
+      if (anchorNode === focusNode) {
+        // const currentNode = anchorNode;
+        // if (currentNode.__type === "mention") {
+        //   // To IOS || Flutter
+        //   sendMessageToChannel({
+        //     action: "onFetchMentionText",
+        //     data: { mentionText: currentNode. },
+        //   });
+        // }
+        return anchorNode;
+      }
+    }
+  }, [activeEditor]);
+
   useEffect(() => {
     return editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
@@ -313,6 +335,7 @@ function MyFunctionPlugin() {
         $updateToolbar();
         setActiveEditor(newEditor);
         getCarret();
+        getCurrentCursorPositionNodeType();
         return false;
       },
       COMMAND_PRIORITY_CRITICAL
