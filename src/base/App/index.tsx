@@ -117,6 +117,12 @@ function MyFunctionPlugin() {
     left: 0,
   });
 
+  const cursorData = useRef<{ text: string; position: number; type: string, }>({
+    text: "",
+    position: -1,
+    type: "",
+  });
+
   const $updateCanSubmit = useCallback(() => {
     activeEditor.getEditorState().read(() => {
       const root = $getRoot();
@@ -304,26 +310,38 @@ function MyFunctionPlugin() {
         });
       }
     }
-  }, [activeEditor, position]);
+  }, [activeEditor]);
 
   const getCurrentCursorPositionNodeType = useCallback(() => {
+    let currentNodeText = "";
+    let currentNodeType = "";
+    let cursorPosition = -1;
+
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
       const anchor = selection.anchor;
-      const focus = selection.focus;
-      const anchorNode = anchor.getNode();
-      const focusNode = focus.getNode();
-      console.log(anchorNode, focusNode);
-      if (anchorNode === focusNode) {
-        // const currentNode = anchorNode;
-        // if (currentNode.__type === "mention") {
-        //   // To IOS || Flutter
-        //   sendMessageToChannel({
-        //     action: "onFetchMentionText",
-        //     data: { mentionText: currentNode. },
-        //   });
-        // }
-        return anchorNode;
+
+      currentNodeText = anchor.getNode().getTextContent();
+      currentNodeType = anchor.getNode().__type;
+      cursorPosition = anchor.offset;
+
+      if (
+        currentNodeText !== cursorData.current.text ||
+        cursorPosition !== cursorData.current.position || currentNodeType !== cursorData.current.type
+      ) {
+        cursorData.current.text = currentNodeText;
+        cursorData.current.position = cursorPosition;
+        cursorData.current.type = currentNodeType;
+
+        //To IOS || Flutter
+        sendMessageToChannel({
+          action: "onGetCursorData",
+          data: {
+            currentNodeText: currentNodeText,
+            cursorPosition: cursorPosition,
+            currentNodeType: currentNodeType,
+          },
+        });
       }
     }
   }, [activeEditor]);
@@ -340,7 +358,7 @@ function MyFunctionPlugin() {
       },
       COMMAND_PRIORITY_CRITICAL
     );
-  }, [editor, $updateToolbar, getCarret]);
+  }, [editor, $updateToolbar, getCarret, getCurrentCursorPositionNodeType]);
 
   useEffect(() => {
     return mergeRegister(

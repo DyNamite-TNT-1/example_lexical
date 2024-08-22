@@ -16,10 +16,28 @@ export function MentionsPlugin() {
       (mention) => {
         const selection = editor.getEditorState()._selection;
         if ($isRangeSelection(selection)) {
-          selection.insertNodes([
-            $createMentionNode(mention.mentionName, mention.dataId),
-            // $createExtendedTextNode(mention.mentionName),
-          ]);
+          const anchor = selection.anchor;
+          if (anchor.type === "text") {
+            const anchorNode = anchor.getNode();
+            if (
+              anchorNode.isSimpleText() ||
+              anchorNode.getType() === "mention"
+            ) {
+              const selectionOffset = anchor.offset;
+              const textContent = anchorNode
+                .getTextContent()
+                .slice(0, selectionOffset);
+              console.log(textContent);
+              const atIndex = textContent.lastIndexOf("@");
+              if (atIndex > 0 && textContent[atIndex - 1] === " ") {
+                const textContentWithoutMention = textContent.slice(0, atIndex);
+                anchorNode.setTextContent(textContentWithoutMention);
+                selection.insertNodes([
+                  $createMentionNode(mention.mentionName, mention.dataId),
+                ]);
+              }
+            }
+          }
         }
         return true;
       },
