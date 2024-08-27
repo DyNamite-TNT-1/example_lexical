@@ -36,6 +36,7 @@ declare global {
     addEmoji: (emoji: EmojiLexicalType) => void;
     addMention: (mention: MentionLexicalType) => void;
     insertText: (text: string) => void;
+    insertBlocks: (blocks: any[]) => void;
     NHAN: HTMLEditorJavascriptInterface;
     webkit: any; // ios
     HTMLEditorChannel: any; // ios

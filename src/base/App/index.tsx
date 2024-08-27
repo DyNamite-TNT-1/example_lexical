@@ -80,6 +80,7 @@ import {
   InsertTextPlugin,
 } from "@base/plugins/InsertTextPlugin";
 import { StyleMapType } from "./type";
+import { INSERT_BLOCKS_COMMAND, InsertBlocksPlugin } from "@base/plugins/InsertBlockPlugin";
 
 function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -545,6 +546,10 @@ function MyFunctionPlugin() {
     editor.dispatchCommand(INSERT_TEXT_COMMAND, text);
   };
 
+  window.insertBlocks = (blocks: any[]) => {
+    editor.dispatchCommand(INSERT_BLOCKS_COMMAND, blocks);
+  }
+
   window.setHTMLContent = (
     baseUrl: string,
     content: string,
@@ -769,6 +774,7 @@ export default function App() {
           <MyOnChangePlugin onChange={onChange} />
           <MentionsPlugin />
           <InsertTextPlugin />
+          <InsertBlocksPlugin />
           <AutoLinkPlugin />
           <RichTextPlugin
             contentEditable={
