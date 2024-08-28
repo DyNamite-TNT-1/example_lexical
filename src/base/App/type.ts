@@ -37,6 +37,7 @@ declare global {
     addMention: (mention: MentionLexicalType) => void;
     insertText: (text: string) => void;
     insertBlocks: (blocks: any[]) => void;
+    onClear: () => void;
     NHAN: HTMLEditorJavascriptInterface;
     webkit: any; // ios
     HTMLEditorChannel: any; // ios
