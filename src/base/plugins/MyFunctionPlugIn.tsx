@@ -41,9 +41,7 @@ import { $isLinkNode } from "@lexical/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { $generateNodesFromDOM, $generateHtmlFromNodes } from "@lexical/html";
 import { Base64 } from "js-base64";
-import {
-  ADD_MENTION_COMMAND
-} from "@base/plugins/MentionsPlugin";
+import { ADD_MENTION_COMMAND } from "@base/plugins/MentionsPlugin";
 import {
   blockTypeToBlockName,
   getSelectedNode,
@@ -53,13 +51,9 @@ import {
 } from "../App/helper";
 import { convertLexicalToBlocks } from "@base/converter/converter";
 import { MentionLexicalType } from "@base/types/mention";
-import {
-  INSERT_TEXT_COMMAND
-} from "@base/plugins/InsertTextPlugin";
+import { INSERT_TEXT_COMMAND } from "@base/plugins/InsertTextPlugin";
 import { StyleMapType } from "../App/type";
-import {
-  INSERT_BLOCKS_COMMAND
-} from "@base/plugins/InsertBlockPlugin";
+import { INSERT_BLOCKS_COMMAND } from "@base/plugins/InsertBlockPlugin";
 import { EmojiLexicalType } from "@base/types/emoji";
 import { ADD_EMOJI_COMMAND } from "./EmojiPlugin";
 
@@ -70,8 +64,6 @@ export function AutoFocusPlugin() {
   }, [editor]);
   return null;
 }
-
- 
 
 export function MyFunctionPlugin() {
   const [editor] = useLexicalComposerContext();

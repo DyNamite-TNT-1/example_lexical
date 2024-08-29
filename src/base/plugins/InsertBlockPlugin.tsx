@@ -17,13 +17,14 @@ export function InsertBlocksPlugin() {
         editor.update(() => {
           const root = $getRoot();
           root.clear();
-          if(blocks) {
+          if (blocks) {
             const nodes = convertBlocksToLexical(blocks);
             nodes.forEach((node) => {
-                root.append(node);
-            })
+              root.append(node);
+            });
+            root.selectEnd();
           }
-        })
+        });
         return true;
       },
       1

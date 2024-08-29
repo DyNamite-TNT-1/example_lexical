@@ -165,7 +165,13 @@ export default function App() {
     <>
       <LexicalComposer initialConfig={editorConfig}>
         {/* <ToolbarPlugin /> */}
-        <div ref={editorContainerRef} className="editor-container">
+        <div
+          ref={editorContainerRef}
+          className="editor-container"
+          style={{
+            paddingTop: 5,
+          }}
+        >
           <AutoFocusPlugin />
           <EmojiPlugin />
           <MyFunctionPlugin />
@@ -181,7 +187,14 @@ export default function App() {
               </div>
             }
             placeholder={
-              <div className="editor-placeholder">Enter some rich text...</div>
+              <div
+                className="editor-placeholder"
+                style={{
+                  paddingTop: 5,
+                }}
+              >
+                Enter some rich text...
+              </div>
             }
             ErrorBoundary={LexicalErrorBoundary}
           />
