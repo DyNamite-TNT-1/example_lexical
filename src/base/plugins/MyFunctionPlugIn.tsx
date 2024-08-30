@@ -22,8 +22,14 @@ import {
   ElementFormatType,
   $isElementNode,
   $getRoot,
+  BaseSelection,
 } from "lexical";
-import { $isParentElementRTL, $setBlocksType } from "@lexical/selection";
+import {
+  $isParentElementRTL,
+  $setBlocksType,
+  $patchStyleText,
+  $getSelectionStyleValueForProperty,
+} from "@lexical/selection";
 import {
   $createHeadingNode,
   $createQuoteNode,
@@ -33,6 +39,7 @@ import {
 import {
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
+  INSERT_CHECK_LIST_COMMAND,
   $isListNode,
   ListNode,
 } from "@lexical/list";
@@ -71,6 +78,11 @@ export function MyFunctionPlugin() {
   const [selectedElementKey, setSelectedElementKey] = useState<string | null>(
     null
   );
+
+  const [textColor, setTextColor] = useState<string>("");
+  const [bgColor, setBgColor] = useState<string>("");
+  const [fontSize, setFontSize] = useState<string>("");
+  const [fontFamily, setFontFamily] = useState<string>("");
 
   const canSubmitRef = useRef<boolean>(false);
 
@@ -179,6 +191,16 @@ export function MyFunctionPlugin() {
           }
         }
       }
+
+      setTextColor($getSelectionStyleValueForProperty(selection, 'color'));
+      setBgColor(
+        $getSelectionStyleValueForProperty(selection, "background-color")
+      );
+      setFontFamily(
+        $getSelectionStyleValueForProperty(selection, "font-family")
+      );
+      setFontSize($getSelectionStyleValueForProperty(selection, "font-size"));
+      
       let matchingParent;
       if ($isLinkNode(parent)) {
         // If node is a link, we need to fetch the parent paragraph node to set format
@@ -476,6 +498,14 @@ export function MyFunctionPlugin() {
     }
   };
 
+  window.formatCheckList = () => {
+    if (styleMapRef.current.blockType !== "check") {
+      editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
+    } else {
+      window.formatParagraph();
+    }
+  }
+
   window.formatQuote = () => {
     if (styleMapRef.current.blockType !== "quote") {
       editor.update(() => {
@@ -510,6 +540,16 @@ export function MyFunctionPlugin() {
     }
   };
 
+
+  window.formatTextStyle = (styles: Record<string, string>) => {
+    activeEditor.update(() => {
+      const selection = $getSelection();
+      if (selection !== null) {
+        $patchStyleText(selection, styles);
+      }
+    });
+  }
+
   window.addEmoji = (emoji: EmojiLexicalType) => {
     editor.dispatchCommand(ADD_EMOJI_COMMAND, emoji);
   };
@@ -532,6 +572,14 @@ export function MyFunctionPlugin() {
       root.clear();
     });
   };
+
+  window.onFocus = () => {
+    editor.focus();
+  }
+
+  window.onUnfocus = () => {
+    editor.blur();
+  }
 
   window.setHTMLContent = (
     baseUrl: string,
@@ -612,3 +660,4 @@ export function MyFunctionPlugin() {
 
   return null;
 }
+

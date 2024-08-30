@@ -5,7 +5,6 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import LinkPlugin from "../plugins/LinkPlugin";
-import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 
 // base
@@ -27,6 +26,7 @@ import {
   AutoFocusPlugin,
   MyFunctionPlugin,
 } from "@base/plugins/MyFunctionPlugIn";
+import { MyCheckListPlugin } from "@base/plugins/MyCheckListPlugin";
 
 export default function App() {
   const editorRef = useRef(null);
@@ -201,8 +201,8 @@ export default function App() {
           {/* History Plugin is necessary if want to have undo, redo*/}
           <HistoryPlugin />
           <LinkPlugin />
-          {/* ListPlugin is necessary for numbered list, bullet list */}
-          <ListPlugin />
+          {/* MyCheckListPlugin is necessary for checklist */}
+          <MyCheckListPlugin />
           <ClickableLinkPlugin />
           {/* CheckListPlugin is necessary for checklist */}
           <CheckListPlugin />

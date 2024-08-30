@@ -31,13 +31,17 @@ declare global {
     formatHeading: (headingTag: HeadingTagType) => void;
     formatNumberedList: () => void;
     formatBulletList: () => void;
+    formatCheckList: () => void;
     formatQuote: () => void;
     formatCodeBlock: () => void;
+    formatTextStyle: (styles: Record<string, string>) => void;
     addEmoji: (emoji: EmojiLexicalType) => void;
     addMention: (mention: MentionLexicalType) => void;
     insertText: (text: string) => void;
     insertBlocks: (blocks: any[]) => void;
     onClear: () => void;
+    onFocus: () => void;
+    onUnfocus: () => void;
     NHAN: HTMLEditorJavascriptInterface;
     webkit: any; // ios
     HTMLEditorChannel: any; // ios
