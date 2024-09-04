@@ -22,7 +22,6 @@ import {
   ElementFormatType,
   $isElementNode,
   $getRoot,
-  BaseSelection,
 } from "lexical";
 import {
   $isParentElementRTL,
@@ -192,7 +191,7 @@ export function MyFunctionPlugin() {
         }
       }
 
-      setTextColor($getSelectionStyleValueForProperty(selection, 'color'));
+      setTextColor($getSelectionStyleValueForProperty(selection, "color"));
       setBgColor(
         $getSelectionStyleValueForProperty(selection, "background-color")
       );
@@ -200,7 +199,7 @@ export function MyFunctionPlugin() {
         $getSelectionStyleValueForProperty(selection, "font-family")
       );
       setFontSize($getSelectionStyleValueForProperty(selection, "font-size"));
-      
+
       let matchingParent;
       if ($isLinkNode(parent)) {
         // If node is a link, we need to fetch the parent paragraph node to set format
@@ -351,7 +350,7 @@ export function MyFunctionPlugin() {
       (_payload, newEditor) => {
         $updateToolbar();
         setActiveEditor(newEditor);
-        getCarret();
+        // getCarret();
         getCurrentCursorPositionNodeType();
         return false;
       },
@@ -499,12 +498,13 @@ export function MyFunctionPlugin() {
   };
 
   window.formatCheckList = () => {
+    editor.focus();
     if (styleMapRef.current.blockType !== "check") {
       editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
     } else {
       window.formatParagraph();
     }
-  }
+  };
 
   window.formatQuote = () => {
     if (styleMapRef.current.blockType !== "quote") {
@@ -540,15 +540,15 @@ export function MyFunctionPlugin() {
     }
   };
 
-
   window.formatTextStyle = (styles: Record<string, string>) => {
-    activeEditor.update(() => {
+    editor.focus();
+    editor.update(() => {
       const selection = $getSelection();
-      if (selection !== null) {
+      if ($isRangeSelection(selection)) {
         $patchStyleText(selection, styles);
       }
     });
-  }
+  };
 
   window.addEmoji = (emoji: EmojiLexicalType) => {
     editor.dispatchCommand(ADD_EMOJI_COMMAND, emoji);
@@ -575,11 +575,11 @@ export function MyFunctionPlugin() {
 
   window.onFocus = () => {
     editor.focus();
-  }
+  };
 
   window.onUnfocus = () => {
     editor.blur();
-  }
+  };
 
   window.setHTMLContent = (
     baseUrl: string,
@@ -660,4 +660,3 @@ export function MyFunctionPlugin() {
 
   return null;
 }
-

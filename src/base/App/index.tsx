@@ -5,7 +5,7 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import LinkPlugin from "../plugins/LinkPlugin";
-import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 
 // base
 import "@base/assets/css/app.css";
@@ -27,6 +27,7 @@ import {
   MyFunctionPlugin,
 } from "@base/plugins/MyFunctionPlugIn";
 import { MyCheckListPlugin } from "@base/plugins/MyCheckListPlugin";
+import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
 
 export default function App() {
   const editorRef = useRef(null);
@@ -168,9 +169,6 @@ export default function App() {
         <div
           ref={editorContainerRef}
           className="editor-container"
-          style={{
-            paddingTop: 5,
-          }}
         >
           <AutoFocusPlugin />
           <EmojiPlugin />
@@ -182,16 +180,13 @@ export default function App() {
           <AutoLinkPlugin />
           <RichTextPlugin
             contentEditable={
-              <div className="editor-input" ref={editorRef}>
+              <div className="editor" ref={editorRef}>
                 <ContentEditable className="ContentEditable__root" />
               </div>
             }
             placeholder={
               <div
                 className="editor-placeholder"
-                style={{
-                  paddingTop: 5,
-                }}
               >
                 Enter some rich text...
               </div>
@@ -201,11 +196,11 @@ export default function App() {
           {/* History Plugin is necessary if want to have undo, redo*/}
           <HistoryPlugin />
           <LinkPlugin />
+          {/* ListPlugin is necessary for numbered list, bulleted list*/}
+          <ListPlugin />
           {/* MyCheckListPlugin is necessary for checklist */}
           <MyCheckListPlugin />
           <ClickableLinkPlugin />
-          {/* CheckListPlugin is necessary for checklist */}
-          <CheckListPlugin />
           {/* CodeHighlightPlugin is necessary for code block */}
           <CodeHighlightPlugin />
           <ListMaxIndentLevelPlugin maxDepth={7} />
