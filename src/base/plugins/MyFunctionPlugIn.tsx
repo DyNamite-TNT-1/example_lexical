@@ -43,7 +43,7 @@ import {
   ListNode,
 } from "@lexical/list";
 import { $createCodeNode } from "@lexical/code";
-import { $isLinkNode } from "@lexical/link";
+import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { $generateNodesFromDOM, $generateHtmlFromNodes } from "@lexical/html";
 import { Base64 } from "js-base64";
@@ -52,6 +52,7 @@ import {
   blockTypeToBlockName,
   getSelectedNode,
   groupNodes,
+  isLinkButNotUnLinked,
   sendMessageToChannel,
   tryToPositionRange,
 } from "../App/helper";
@@ -62,6 +63,8 @@ import { StyleMapType } from "../App/type";
 import { INSERT_BLOCKS_COMMAND } from "@base/plugins/InsertBlockPlugin";
 import { EmojiLexicalType } from "@base/types/emoji";
 import { ADD_EMOJI_COMMAND } from "./EmojiPlugin";
+import { INSERT_LINK_COMMAND } from "./InsertLinkPlugin";
+import { LinkInfoType } from "@base/types/link";
 
 export function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -168,7 +171,7 @@ export function MyFunctionPlugin() {
       // Update links
       const node = getSelectedNode(selection);
       const parent = node.getParent();
-      isLink = $isLinkNode(parent) || $isLinkNode(node);
+      isLink = isLinkButNotUnLinked(parent) || isLinkButNotUnLinked(node);
       //
       if (elementDOM !== null) {
         setSelectedElementKey(elementKey);
@@ -538,6 +541,21 @@ export function MyFunctionPlugin() {
         }
       });
     }
+  };
+
+  window.insertLink = (url: string, text: string) => {
+    let linkInfo: LinkInfoType = {
+      url,
+      text,
+    };
+
+    if (!styleMapRef.current.isLink) {
+      editor.dispatchCommand(INSERT_LINK_COMMAND, linkInfo);
+    }
+  };
+
+  window.removeLink = () => {
+    editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
   };
 
   window.formatTextStyle = (styles: Record<string, string>) => {

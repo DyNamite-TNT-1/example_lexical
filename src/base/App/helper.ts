@@ -1,5 +1,5 @@
 import { $isElementNode, LexicalNode, RangeSelection } from "lexical";
-import { $isLinkNode } from "@lexical/link";
+import { $isLinkNode, $isAutoLinkNode } from '@lexical/link';
 
 import {
     $isAtNodeEnd,
@@ -135,3 +135,19 @@ export function validateUrl(url: string): boolean {
   // Maybe show a dialog where they user can type the URL before inserting it.
   return url === 'https://' || urlRegExp.test(url);
 }
+
+export const isLinkButNotUnLinked = (node: LexicalNode | null): boolean => {
+  if (!node) {
+    return false;
+  }
+
+  if (!$isLinkNode(node)) {
+    return false;
+  }
+
+  if ($isAutoLinkNode(node) && node.getIsUnlinked()) {
+    return false;
+  }
+
+  return true;
+};

@@ -28,6 +28,7 @@ import {
 } from "@base/plugins/MyFunctionPlugIn";
 import { MyCheckListPlugin } from "@base/plugins/MyCheckListPlugin";
 import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
+import { InsertLinkPlugin } from "@base/plugins/InsertLinkPlugin";
 
 export default function App() {
   const editorRef = useRef(null);
@@ -201,6 +202,7 @@ export default function App() {
           {/* MyCheckListPlugin is necessary for checklist */}
           <MyCheckListPlugin />
           <ClickableLinkPlugin />
+          <InsertLinkPlugin />
           {/* CodeHighlightPlugin is necessary for code block */}
           <CodeHighlightPlugin />
           <ListMaxIndentLevelPlugin maxDepth={7} />

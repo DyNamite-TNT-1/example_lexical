@@ -7,8 +7,12 @@ import {
   CAN_UNDO_COMMAND,
   CAN_REDO_COMMAND,
 } from "lexical";
+import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import {} from "@lexical/selection";
 import { mergeRegister } from "@lexical/utils";
+import { getSelectedNode, isLinkButNotUnLinked } from "@base/App/helper";
+import { LinkInfoType } from "@base/types/link";
+import { INSERT_LINK_COMMAND } from "./InsertLinkPlugin";
 
 const LowPriority = 1;
 
@@ -20,6 +24,7 @@ const ToolbarPlugin = () => {
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
+  const [isLink, setIsLink] = useState(false);
 
   const updateToolbar = useCallback(() => {
     // Focus the editor when the effect fires!
@@ -30,6 +35,10 @@ const ToolbarPlugin = () => {
       setIsItalic(selection.hasFormat("italic"));
       setIsUnderline(selection.hasFormat("underline"));
       setIsStrikethrough(selection.hasFormat("strikethrough"));
+      // Update links
+      const node = getSelectedNode(selection);
+      const parent = node.getParent();
+      setIsLink(isLinkButNotUnLinked(parent) || isLinkButNotUnLinked(node));
     }
   }, [editor]);
 
@@ -66,6 +75,27 @@ const ToolbarPlugin = () => {
       )
     );
   }, [editor, updateToolbar]);
+
+  const insertLink = useCallback(() => {
+    if (!isLink) {
+      // let content = "";
+      // editor.read(() => {
+      //   const selection = $getSelection();
+      //   if ($isRangeSelection(selection)) {
+      //     content = selection.getTextContent();
+      //   }
+      // });
+      editor.focus();
+      let linkInfo: LinkInfoType = {
+        url: "www.google.com",
+        text: "Google",
+      };
+
+      editor.dispatchCommand(INSERT_LINK_COMMAND, linkInfo);
+    } else {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+    }
+  }, [editor, isLink]);
 
   return (
     <div className="toolbar">
@@ -124,6 +154,15 @@ const ToolbarPlugin = () => {
         aria-label="Format Strikethrough"
       >
         <i className="format strikethrough" />
+      </button>
+      <button
+        onClick={insertLink}
+        className={"toolbar-item spaced " + (isLink ? "active" : "")}
+        aria-label="Insert link"
+        title="Insert link"
+        type="button"
+      >
+        <i className="format">Link</i>
       </button>
     </div>
   );

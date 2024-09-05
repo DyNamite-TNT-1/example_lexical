@@ -55,6 +55,7 @@ export function ClickableLinkPlugin({
       }
 
       let url = null;
+      let text = "";
       let urlTarget = null;
       nearestEditor.update(() => {
         const clickedNode = $getNearestNodeFromDOMNode(target);
@@ -67,6 +68,7 @@ export function ClickableLinkPlugin({
             if ($isLinkNode(maybeLinkNode)) {
               url = maybeLinkNode.sanitizeUrl(maybeLinkNode.getURL());
               urlTarget = maybeLinkNode.getTarget();
+              text = maybeLinkNode.getTextContent();
             } else {
               const a = findMatchingDOM(target, isHTMLAnchorElement);
               if (a !== null) {
@@ -89,13 +91,13 @@ export function ClickableLinkPlugin({
         return;
       }
 
-      const isMiddle = event.type === "auxclick" && event.button === 1;
-      console.log("click", url);
+      // const isMiddle = event.type === "auxclick" && event.button === 1;
       // To IOS && Flutter
       sendMessageToChannel({
         action: "onTapLinkUrl",
         data: {
           linkUrl: url,
+          linkText: text,
         },
       });
       //   window.open(
