@@ -543,10 +543,11 @@ export function MyFunctionPlugin() {
     }
   };
 
-  window.insertLink = (url: string, text: string) => {
+  window.insertLink = (link: Record<string, string>) => {
+    console.log("insertLink", link["url"], link["text"]);
     let linkInfo: LinkInfoType = {
-      url,
-      text,
+      url: link["url"],
+      text: link["text"],
     };
 
     if (!styleMapRef.current.isLink) {

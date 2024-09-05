@@ -35,7 +35,7 @@ declare global {
     formatQuote: () => void;
     formatCodeBlock: () => void;
     formatTextStyle: (styles: Record<string, string>) => void;
-    insertLink: (url: string, text: string) => void;
+    insertLink: (url: Record<string, string>) => void;
     removeLink: () => void;
     addEmoji: (emoji: EmojiLexicalType) => void;
     addMention: (mention: MentionLexicalType) => void;
