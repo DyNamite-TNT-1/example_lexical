@@ -13,7 +13,7 @@ import { $createExtendedTextNode } from "../nodes/ExtendedTextNode";
 import { $createQuoteNode } from "@lexical/rich-text";
 
 import { $createCodeNode } from "@lexical/code";
-import { $createLinkNode } from "@lexical/link";
+import { $createLinkNode, $createAutoLinkNode } from "@lexical/link";
 import { visitTree } from "@base/clone-lexical/lexical-devtools-core/src/generateContent";
 import {
   calculateSum,
@@ -97,12 +97,30 @@ export function convertBlocksToLexical(blocks: any[]): LexicalNode[] {
 
   visitBlockTree(hugeBlocks, (currentBlock: any) => {
     if (currentBlock.type === BlockElementType.LINK) {
-      let linkNode = $createLinkNode(currentBlock.url);
-      nodeObjs.push({
-        key: currentBlock.key,
-        parent: currentBlock.parent,
-        node: linkNode,
-      });
+      // let linkNode = $createLinkNode(currentBlock.url);
+      // nodeObjs.push({
+      //   key: currentBlock.key,
+      //   parent: currentBlock.parent,
+      //   node: linkNode,
+      // });
+      const isUnlinked = currentBlock?.metaData?.isUnlinked;
+      if (isUnlinked !== undefined && isUnlinked == true) {
+        let autoLinkNode = $createAutoLinkNode(currentBlock.url, {
+          isUnlinked: true,
+        });
+        nodeObjs.push({
+          key: currentBlock.key,
+          parent: currentBlock.parent,
+          node: autoLinkNode,
+        });
+      } else {
+        let linkNode = $createLinkNode(currentBlock.url);
+        nodeObjs.push({
+          key: currentBlock.key,
+          parent: currentBlock.parent,
+          node: linkNode,
+        });
+      }
     } else if (currentBlock.type === BlockElementType.RICH_TEXT_PREFORMATTED) {
       let codeNode = $createCodeNode();
       nodeObjs.push({

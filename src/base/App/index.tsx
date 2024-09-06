@@ -166,7 +166,7 @@ export default function App() {
   return (
     <>
       <LexicalComposer initialConfig={editorConfig}>
-        {/* <ToolbarPlugin /> */}
+        <ToolbarPlugin />
         <div
           ref={editorContainerRef}
           className="editor-container"

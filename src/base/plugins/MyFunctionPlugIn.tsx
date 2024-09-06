@@ -313,6 +313,7 @@ export function MyFunctionPlugin() {
   }, [activeEditor]);
 
   const getCurrentCursorPositionNodeType = useCallback(() => {
+    let selectionText = "";
     let currentNodeText = "";
     let currentNodeType = "";
     let cursorPosition = -1;
@@ -320,7 +321,9 @@ export function MyFunctionPlugin() {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
       const anchor = selection.anchor;
+      let isLink = false;
 
+      selectionText = selection.getTextContent();
       currentNodeText = anchor.getNode().getTextContent();
       currentNodeType = anchor.getNode().__type;
       cursorPosition = anchor.offset;
@@ -334,13 +337,19 @@ export function MyFunctionPlugin() {
         cursorData.current.position = cursorPosition;
         cursorData.current.type = currentNodeType;
 
+        // Update links
+        const node = getSelectedNode(selection);
+        const parent = node.getParent();
+        isLink = isLinkButNotUnLinked(parent) || isLinkButNotUnLinked(node);
+
         //To IOS || Flutter
         sendMessageToChannel({
           action: "onGetCursorData",
           data: {
+            selectionText: selectionText,
             currentNodeText: currentNodeText,
             cursorPosition: cursorPosition,
-            currentNodeType: currentNodeType,
+            currentNodeType: isLink ? "link" : currentNodeType,
           },
         });
       }
@@ -544,7 +553,6 @@ export function MyFunctionPlugin() {
   };
 
   window.insertLink = (link: Record<string, string>) => {
-    console.log("insertLink", link["url"], link["text"]);
     let linkInfo: LinkInfoType = {
       url: link["url"],
       text: link["text"],

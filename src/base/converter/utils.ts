@@ -11,7 +11,7 @@ import {
 import { $isListNode, $isListItemNode } from "@lexical/list";
 import { $isCodeNode } from "@lexical/code";
 import { $isQuoteNode } from "@lexical/rich-text";
-import { $isLinkNode } from "@lexical/link";
+import { $isLinkNode, $isAutoLinkNode } from "@lexical/link";
 
 import {
   IS_BOLD,
@@ -185,13 +185,22 @@ export function getBlockTypeElement(node: LexicalNode) {
    * In blocks format, Link is inline element. But, in Lexical, Link is Element Node aka block element.
    */
   if ($isLinkNode(node)) {
+    let isUnlinked: boolean | undefined = undefined;
+    if ($isAutoLinkNode(node)) {
+      isUnlinked = node.getIsUnlinked();
+    }
+
     return {
       key: node.getKey(),
       parent: node.__parent,
       type: BlockElementType.LINK,
+      nodeType: node.getType(),
       text: node.getTextContent(),
       url: node.getURL(),
       elements: [] as any[],
+      metaData: {
+        isUnlinked: isUnlinked,
+      },
     };
   }
 
@@ -280,7 +289,8 @@ export function getBlockTypeElement(node: LexicalNode) {
   return {
     key: node.getKey(),
     parent: node.__parent,
-    type: "unknown" + node.getType(),
-    elements: [],
+    type: BlockElementType.RICH_TEXT_SECTION,
+    nodeType: node.getType(),
+    elements: [] as any[],
   };
 }
