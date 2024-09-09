@@ -71,4 +71,7 @@ export type StyleMapType = {
   canRedo: boolean;
   blockType: string;
   elementFormat: ElementFormatType;
+  fontFamily: string;
 };
+
+

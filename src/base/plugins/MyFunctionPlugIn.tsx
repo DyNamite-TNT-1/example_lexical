@@ -81,10 +81,10 @@ export function MyFunctionPlugin() {
     null
   );
 
-  const [textColor, setTextColor] = useState<string>("");
-  const [bgColor, setBgColor] = useState<string>("");
-  const [fontSize, setFontSize] = useState<string>("");
-  const [fontFamily, setFontFamily] = useState<string>("");
+  // const [textColor, setTextColor] = useState<string>("");
+  // const [bgColor, setBgColor] = useState<string>("");
+  // const [fontSize, setFontSize] = useState<string>("");
+  // const [fontFamily, setFontFamily] = useState<string>("");
 
   const canSubmitRef = useRef<boolean>(false);
 
@@ -100,6 +100,7 @@ export function MyFunctionPlugin() {
     canRedo: false,
     blockType: "paragraph",
     elementFormat: "left",
+    fontFamily: "Arial",
   });
 
   const position = useRef<{ top: number; left: number }>({
@@ -144,6 +145,7 @@ export function MyFunctionPlugin() {
       let isCode = false;
       let blockType = "paragraph";
       let elementFormat: ElementFormatType = "left";
+      let fontFamily = "Arial";
 
       //
       const anchorNode = selection.anchor.getNode();
@@ -194,14 +196,17 @@ export function MyFunctionPlugin() {
         }
       }
 
-      setTextColor($getSelectionStyleValueForProperty(selection, "color"));
-      setBgColor(
-        $getSelectionStyleValueForProperty(selection, "background-color")
-      );
-      setFontFamily(
-        $getSelectionStyleValueForProperty(selection, "font-family")
-      );
-      setFontSize($getSelectionStyleValueForProperty(selection, "font-size"));
+      // Update font format
+      fontFamily = $getSelectionStyleValueForProperty(selection, "font-family");
+
+      // setTextColor($getSelectionStyleValueForProperty(selection, "color"));
+      // setBgColor(
+      //   $getSelectionStyleValueForProperty(selection, "background-color")
+      // );
+      // setFontFamily(
+      //   $getSelectionStyleValueForProperty(selection, "font-family")
+      // );
+      // setFontSize($getSelectionStyleValueForProperty(selection, "font-size"));
 
       let matchingParent;
       if ($isLinkNode(parent)) {
@@ -226,7 +231,8 @@ export function MyFunctionPlugin() {
         isStrikethrough !== styleMapRef.current.isStrikethrough ||
         isCode !== styleMapRef.current.isCode ||
         blockType !== styleMapRef.current.blockType ||
-        elementFormat !== styleMapRef.current.elementFormat
+        elementFormat !== styleMapRef.current.elementFormat ||
+        fontFamily !== styleMapRef.current.fontFamily
       ) {
         styleMapRef.current.isRTL = isRTL;
         styleMapRef.current.isLink = isLink;
@@ -237,6 +243,7 @@ export function MyFunctionPlugin() {
         styleMapRef.current.isCode = isCode;
         styleMapRef.current.blockType = blockType;
         styleMapRef.current.elementFormat = elementFormat;
+        styleMapRef.current.fontFamily = fontFamily;
         // console.log(styleMapRef.current);
         //To Android
         window.NHAN?.onChangeStatusButton?.(
@@ -459,29 +466,42 @@ export function MyFunctionPlugin() {
   };
 
   window.alignLeft = function () {
-    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left");
+    if (
+      styleMapRef.current.elementFormat !== "left" &&
+      styleMapRef.current.elementFormat !== ""
+    ) {
+      editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left");
+    }
   };
 
   window.alignCenter = function () {
-    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center");
+    if (styleMapRef.current.elementFormat !== "center") {
+      editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center");
+    }
   };
 
   window.alignRight = function () {
-    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right");
+    if (styleMapRef.current.elementFormat !== "right") {
+      editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right");
+    }
   };
 
   window.alignJustify = function () {
-    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "justify");
+    if (styleMapRef.current.elementFormat !== "justify") {
+      editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "justify");
+    }
   };
 
   window.formatParagraph = function () {
-    editor.update(() => {
-      const selection = $getSelection();
+    if (styleMapRef.current.blockType !== "paragraph") {
+      editor.update(() => {
+        const selection = $getSelection();
 
-      if ($isRangeSelection(selection)) {
-        $setBlocksType(selection, () => $createParagraphNode());
-      }
-    });
+        if ($isRangeSelection(selection)) {
+          $setBlocksType(selection, () => $createParagraphNode());
+        }
+      });
+    }
   };
 
   window.formatHeading = (headingSize: HeadingTagType) => {

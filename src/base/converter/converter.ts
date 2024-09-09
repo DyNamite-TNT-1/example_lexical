@@ -97,12 +97,6 @@ export function convertBlocksToLexical(blocks: any[]): LexicalNode[] {
 
   visitBlockTree(hugeBlocks, (currentBlock: any) => {
     if (currentBlock.type === BlockElementType.LINK) {
-      // let linkNode = $createLinkNode(currentBlock.url);
-      // nodeObjs.push({
-      //   key: currentBlock.key,
-      //   parent: currentBlock.parent,
-      //   node: linkNode,
-      // });
       const isUnlinked = currentBlock?.metaData?.isUnlinked;
       if (isUnlinked !== undefined && isUnlinked == true) {
         let autoLinkNode = $createAutoLinkNode(currentBlock.url, {
