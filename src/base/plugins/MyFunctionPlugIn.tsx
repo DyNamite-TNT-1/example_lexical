@@ -65,6 +65,7 @@ import { EmojiLexicalType } from "@base/types/emoji";
 import { ADD_EMOJI_COMMAND } from "./EmojiPlugin";
 import { INSERT_LINK_COMMAND } from "./InsertLinkPlugin";
 import { LinkInfoType } from "@base/types/link";
+import useAppConfig from "@base/hooks/useAppConfig";
 
 export function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -75,6 +76,7 @@ export function AutoFocusPlugin() {
 }
 
 export function MyFunctionPlugin() {
+  const { onChangeMode } = useAppConfig();
   const [editor] = useLexicalComposerContext();
   const [activeEditor, setActiveEditor] = useState(editor);
   const [selectedElementKey, setSelectedElementKey] = useState<string | null>(
@@ -703,6 +705,10 @@ export function MyFunctionPlugin() {
       return { blocks: [], plainText: "", error: "failed_submit" };
     }
     return result;
+  };
+
+  window.setTheme = (theme) => {
+    onChangeMode(theme);
   };
 
   return null;

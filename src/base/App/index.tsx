@@ -29,8 +29,11 @@ import {
 import { MyCheckListPlugin } from "@base/plugins/MyCheckListPlugin";
 import ToolbarPlugin from "@base/plugins/ToolbarPlugin";
 import { InsertLinkPlugin } from "@base/plugins/InsertLinkPlugin";
+import useAppConfig from "@base/hooks/useAppConfig";
 
 export default function App() {
+  const { mode } = useAppConfig();
+
   const editorRef = useRef(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const kbRef = useRef<HTMLDivElement>(null);
@@ -165,9 +168,14 @@ export default function App() {
 
   return (
     <>
-      <LexicalComposer initialConfig={editorConfig}>
+      <LexicalComposer
+        initialConfig={editorConfig}
+      >
         {/* <ToolbarPlugin /> */}
-        <div ref={editorContainerRef} className="editor-container">
+        <div
+          ref={editorContainerRef}
+          className={`editor-container ${mode === "dark" ? "dark-mode" : ""}`}
+        >
           <AutoFocusPlugin />
           <EmojiPlugin />
           <MyFunctionPlugin />

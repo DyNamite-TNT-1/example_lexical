@@ -3,11 +3,8 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { useCallback } from "react";
 import {
   $getRoot,
-  $getSelection,
-  $isRangeSelection,
   EditorState,
   LexicalEditor,
-  RangeSelection,
 } from "lexical";
 
 interface MyOnChangePluginProps {
@@ -25,10 +22,7 @@ const MyOnChangePlugin = (props: MyOnChangePluginProps) => {
     [onChange]
   );
 
-  return <OnChangePlugin onChange={handleChange} />;
+  return <OnChangePlugin onChange={handleChange} ignoreSelectionChange/>;
 };
 
 export default MyOnChangePlugin;
-function $patchStyleText(selection: RangeSelection, styles: any) {
-  throw new Error("Function not implemented.");
-}

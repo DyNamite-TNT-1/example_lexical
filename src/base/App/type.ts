@@ -1,3 +1,4 @@
+import { ThemeMode } from "@base/types/app";
 import { EmojiLexicalType } from "@base/types/emoji";
 import { MentionLexicalType } from "@base/types/mention";
 import { HeadingTagType } from "@lexical/rich-text";
@@ -56,6 +57,7 @@ declare global {
     getSelectionCoords: (win?: Window) => any;
     getHTMLContent: () => string;
     onSubmit: () => { blocks: any[]; plainText: string; error?: string };
+    setTheme: (theme: ThemeMode) => void;
   }
 }
 
@@ -73,5 +75,3 @@ export type StyleMapType = {
   elementFormat: ElementFormatType;
   fontFamily: string;
 };
-
-
