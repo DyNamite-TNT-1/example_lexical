@@ -22,6 +22,8 @@ import {
   ElementFormatType,
   $isElementNode,
   $getRoot,
+  BaseSelection,
+  $setSelection,
 } from "lexical";
 import {
   $isParentElementRTL,
@@ -82,11 +84,7 @@ export function MyFunctionPlugin() {
   const [selectedElementKey, setSelectedElementKey] = useState<string | null>(
     null
   );
-
-  // const [textColor, setTextColor] = useState<string>("");
-  // const [bgColor, setBgColor] = useState<string>("");
-  // const [fontSize, setFontSize] = useState<string>("");
-  // const [fontFamily, setFontFamily] = useState<string>("");
+  const [selection, setSelection] = useState<BaseSelection | null>(null);
 
   const canSubmitRef = useRef<boolean>(false);
 
@@ -103,11 +101,6 @@ export function MyFunctionPlugin() {
     blockType: "paragraph",
     elementFormat: "left",
     fontFamily: "Arial",
-  });
-
-  const position = useRef<{ top: number; left: number }>({
-    top: 0,
-    left: 0,
   });
 
   const cursorData = useRef<{ text: string; position: number; type: string }>({
@@ -201,15 +194,6 @@ export function MyFunctionPlugin() {
       // Update font format
       fontFamily = $getSelectionStyleValueForProperty(selection, "font-family");
 
-      // setTextColor($getSelectionStyleValueForProperty(selection, "color"));
-      // setBgColor(
-      //   $getSelectionStyleValueForProperty(selection, "background-color")
-      // );
-      // setFontFamily(
-      //   $getSelectionStyleValueForProperty(selection, "font-family")
-      // );
-      // setFontSize($getSelectionStyleValueForProperty(selection, "font-size"));
-
       let matchingParent;
       if ($isLinkNode(parent)) {
         // If node is a link, we need to fetch the parent paragraph node to set format
@@ -263,62 +247,49 @@ export function MyFunctionPlugin() {
   const getCarret = useCallback(() => {
     let top = 0,
       left = 0;
-    const selection = $getSelection();
-    if ($isRangeSelection(selection)) {
-      const editorWindow = editor._window || window;
-      const range = editorWindow.document.createRange();
-      const isRangePositioned = tryToPositionRange(
-        selection.anchor.offset,
-        range,
-        editorWindow
-      );
-      if (isRangePositioned !== null) {
-        const rangeDomRect = range.getBoundingClientRect();
-        top = rangeDomRect.top;
-        left = rangeDomRect.left;
-      }
-      if (top === 0 && left === 0) {
-        const tmpSelection = window.getSelection();
-        if (tmpSelection != null && tmpSelection.isCollapsed) {
-          const tmpRange = tmpSelection.getRangeAt(0);
+    activeEditor.update(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        const editorWindow = activeEditor._window || window;
+        const range = editorWindow.document.createRange();
+        const isRangePositioned = tryToPositionRange(
+          selection.anchor.offset,
+          range,
+          editorWindow
+        );
+        if (isRangePositioned !== null) {
+          const rangeDomRect = range.getBoundingClientRect();
+          top = rangeDomRect.top;
+          left = rangeDomRect.left;
+        }
+        if (top === 0 && left === 0) {
+          const tmpSelection = window.getSelection();
+          if (tmpSelection != null && tmpSelection.isCollapsed) {
+            const tmpRange = tmpSelection.getRangeAt(0);
 
-          const tmpSpan = document.createElement("span");
-          tmpSpan.setAttribute("data-lexical-text", "true");
+            const tmpSpan = document.createElement("span");
+            tmpSpan.setAttribute("data-lexical-text", "true");
 
-          tmpRange.insertNode(tmpSpan);
-          const isTmpRangePositioned = tryToPositionRange(
-            tmpSelection.anchorOffset,
-            tmpRange,
-            editorWindow
-          );
-          if (isTmpRangePositioned !== null) {
-            const tmpRangeDomRect = tmpRange.getBoundingClientRect();
-            if (
-              tmpRangeDomRect.top !== position.current.top ||
-              tmpRangeDomRect.left !== position.current.left
-            ) {
+            tmpRange.insertNode(tmpSpan);
+            const isTmpRangePositioned = tryToPositionRange(
+              tmpSelection.anchorOffset,
+              tmpRange,
+              editorWindow
+            );
+            if (isTmpRangePositioned !== null) {
+              const tmpRangeDomRect = tmpRange.getBoundingClientRect();
               top = tmpRangeDomRect.top;
               left = tmpRangeDomRect.left;
             }
+            tmpSpan.remove();
           }
-          tmpSpan.remove();
         }
       }
-      if (
-        (top !== position.current.top || left !== position.current.left) &&
-        (top !== 0 || left !== 0)
-      ) {
-        position.current = { top: top, left: left };
-        // console.log(position.current);
-        //To Android
-        window.NHAN?.getCarret?.({ top: top, left: left });
-        // To IOS || Flutter
-        sendMessageToChannel({
-          action: "onChangeCarret",
-          data: { top: top, left: left },
-        });
-      }
-    }
+    });
+    return {
+      left,
+      top,
+    };
   }, [activeEditor]);
 
   const getCurrentCursorPositionNodeType = useCallback(() => {
@@ -623,10 +594,19 @@ export function MyFunctionPlugin() {
   };
 
   window.onFocus = () => {
-    editor.focus();
+    editor.focus(() => {
+      editor.update(() => {
+        if (selection != null) {
+          $setSelection(selection?.clone());
+        }
+      })
+    });
   };
 
   window.onUnfocus = () => {
+    editor.read(()=>{
+      setSelection($getSelection());
+    });
     editor.blur();
   };
 
@@ -686,6 +666,10 @@ export function MyFunctionPlugin() {
     }
 
     return fHtmlStr;
+  };
+
+  window.getCarret = () => {
+    return getCarret();
   };
 
   window.onSubmit = () => {

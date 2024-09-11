@@ -56,6 +56,7 @@ declare global {
     setPaddingTopBottom: (top: number, bottom: number) => void;
     getSelectionCoords: (win?: Window) => any;
     getHTMLContent: () => string;
+    getCarret: () => { left: number; top: number };
     onSubmit: () => { blocks: any[]; plainText: string; error?: string };
     setTheme: (theme: ThemeMode) => void;
   }
