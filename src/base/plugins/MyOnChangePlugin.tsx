@@ -1,10 +1,10 @@
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
-import { useCallback } from 'react';
-import { $getRoot, EditorState, LexicalEditor } from 'lexical';
+import { useCallback } from "react";
+import { $getRoot, EditorState, LexicalEditor } from "lexical";
 
 interface MyOnChangePluginProps {
-  onChange: ( plainText: string) => void;
+  onChange: (plainText: string) => void;
 }
 
 const MyOnChangePlugin = (props: MyOnChangePluginProps) => {
